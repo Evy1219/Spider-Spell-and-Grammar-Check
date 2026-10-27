@@ -1,1 +1,0 @@
-# Spider-Spell-and-Grammar-Check
