@@ -10,7 +10,560 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <style>
+/* ==========================================================================
+   Spell Spider — styles
+   Palette: plum ink on dusky lavender, white paper pages,
+   three catch colors (spelling raspberry, grammar amber, style blue).
+   ========================================================================== */
+
+:root {
+  --ink: #241b35;
+  --ink-soft: #5e5571;
+  --ink-faint: #8a8299;
+  --dusk: #eeebf3;
+  --dusk-deep: #dcd6e6;
+  --panel: #f7f5fa;
+  --paper: #ffffff;
+  --line: #d9d3e3;
+  --silk: #a79fbd;
+  --primary: #3d2b5f;
+  --primary-hover: #2e2049;
+  --on-primary: #ffffff;
+  --focus: #7b5cf0;
+
+  /* catch colors as RGB triplets so we can vary the alpha */
+  --c-spelling: 201 42 82;
+  --c-grammar: 196 122 0;
+  --c-style: 42 115 152;
+
+  --font-ui: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-doc: "Literata", Georgia, "Times New Roman", serif;
+
+  --topbar-h: 64px;
+  --radius-s: 6px;
+  --radius-m: 10px;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ink: #ece8f4;
+    --ink-soft: #b7aecb;
+    --ink-faint: #8f86a3;
+    --dusk: #1c1627;
+    --dusk-deep: #130f1c;
+    --panel: #221b30;
+    --paper: #fbfaf7;
+    --line: #3a3150;
+    --silk: #9c93b6;
+    --primary: #b9a4ef;
+    --primary-hover: #cbbaf7;
+    --on-primary: #1a1325;
+    --focus: #b9a4ef;
+    --c-spelling: 236 84 122;
+    --c-grammar: 233 165 40;
+    --c-style: 92 170 214;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ink: #ece8f4;
+  --ink-soft: #b7aecb;
+  --ink-faint: #8f86a3;
+  --dusk: #1c1627;
+  --dusk-deep: #130f1c;
+  --panel: #221b30;
+  --paper: #fbfaf7;
+  --line: #3a3150;
+  --silk: #9c93b6;
+  --primary: #b9a4ef;
+  --primary-hover: #cbbaf7;
+  --on-primary: #1a1325;
+  --focus: #b9a4ef;
+  --c-spelling: 236 84 122;
+  --c-grammar: 233 165 40;
+  --c-style: 92 170 214;
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  background: var(--dusk);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select, textarea { font: inherit; color: inherit; }
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+[hidden] { display: none !important; }
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 38px; padding: 0 14px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-s);
+  background: var(--paper);
+  color: #241b35;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color .15s, border-color .15s;
+}
+.btn:hover:not(:disabled) { border-color: var(--silk); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn-primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-primary);
+}
+.btn-primary:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
+.btn-wide { width: 100%; }
+
+.text-btn {
+  background: none; border: 0; padding: 4px 0; cursor: pointer;
+  color: var(--primary); font-weight: 700; text-decoration: underline;
+  text-underline-offset: 3px; text-decoration-thickness: 1.5px;
+}
+
+/* ---------- Top bar ---------- */
+.topbar {
+  position: relative; z-index: 20;
+  flex: none;
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  min-height: var(--topbar-h);
+  padding: 10px 20px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+.brand {
+  display: inline-flex; align-items: center; gap: 10px;
+  color: var(--ink); text-decoration: none;
+  font-weight: 700; font-size: 19px; letter-spacing: -0.01em;
+}
+.brand-mark { width: 32px; height: 32px; }
+.run { display: flex; gap: 8px; flex-wrap: wrap; }
+.run .btn-primary { min-width: 132px; }
+
+.speed { display: flex; align-items: center; gap: 10px; }
+.speed-label { font-weight: 700; font-size: 14px; }
+.speed input { width: 150px; }
+.speed output { min-width: 56px; font-size: 14px; color: var(--ink-soft); }
+
+.status {
+  margin: 0 0 0 auto;
+  color: var(--ink-soft);
+  font-size: 14px;
+  max-width: 44ch;
+  text-align: right;
+}
+
+input[type="range"] { accent-color: var(--primary); }
+
+/* ---------- Layout ---------- */
+.layout {
+  display: grid;
+  grid-template-columns: 290px minmax(0, 1fr) 340px;
+  flex: 1;
+  min-height: 0;
+}
+.panel {
+  background: var(--panel);
+  overflow-y: auto;
+}
+.panel-settings { border-right: 1px solid var(--line); padding: 8px 20px 28px; }
+.panel-caught { border-left: 1px solid var(--line); display: flex; flex-direction: column; overflow: hidden; }
+
+.group { padding: 18px 0 20px; border-bottom: 1px solid var(--line); }
+.group:last-child { border-bottom: 0; }
+.group h2, .caught-head h2 {
+  margin: 0 0 12px;
+  font-size: 17px; font-weight: 700; letter-spacing: -0.005em;
+}
+
+/* ---------- Documents panel ---------- */
+.dropzone {
+  display: block; position: relative;
+  padding: 16px;
+  border: 1.5px dashed var(--silk);
+  border-radius: var(--radius-m);
+  background: var(--dusk);
+  cursor: pointer;
+}
+.dropzone:hover { border-color: var(--primary); }
+.dropzone:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
+.dropzone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+.dropzone-title { display: block; font-weight: 700; color: var(--primary); }
+.dropzone-hint { display: block; margin-top: 2px; font-size: 13px; color: var(--ink-soft); }
+
+.doc-list { list-style: none; margin: 12px 0 8px; padding: 0; }
+.doc-item {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
+}
+.doc-item:last-child { border-bottom: 0; }
+.doc-ext {
+  width: 40px; padding: 3px 0; text-align: center;
+  border-radius: 4px; background: var(--dusk-deep);
+  font-size: 12px; font-weight: 700; color: var(--ink-soft);
+}
+.doc-info { min-width: 0; }
+.doc-name { display: block; font-weight: 700; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.doc-state { display: block; font-size: 13px; color: var(--ink-soft); }
+.doc-state.is-bad { color: rgb(var(--c-spelling)); }
+.icon-btn {
+  width: 30px; height: 30px; border: 0; border-radius: 50%;
+  background: transparent; cursor: pointer;
+  font-size: 20px; line-height: 1; color: var(--ink-soft);
+}
+.icon-btn:hover { background: var(--dusk-deep); color: var(--ink); }
+
+/* ---------- Settings ---------- */
+.field { margin: 0 0 14px; border: 0; padding: 0; min-width: 0; }
+.field > label, .field > legend { display: block; font-weight: 700; font-size: 14px; margin-bottom: 4px; padding: 0; }
+.range-row { display: flex; align-items: center; gap: 10px; }
+.range-row input { flex: 1; min-width: 0; }
+.range-row output { min-width: 54px; text-align: right; font-size: 14px; color: var(--ink-soft); }
+
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.swatch { position: relative; }
+.swatch input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.swatch span {
+  display: block; width: 30px; height: 30px; border-radius: 50%;
+  background: var(--sw);
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.25);
+  border: 2px solid transparent;
+  outline: 2px solid transparent; outline-offset: 2px;
+}
+.swatch input:checked + span { outline-color: var(--ink); }
+.swatch input:focus-visible + span { outline: 3px solid var(--focus); }
+.swatch-custom span { position: relative; }
+.swatch-custom span::after {
+  content: "+"; position: absolute; inset: 0;
+  display: grid; place-items: center;
+  color: #fff; font-weight: 700; font-size: 18px; line-height: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .5);
+}
+.legend-note { font-weight: 400; color: var(--ink-soft); margin-left: 4px; }
+.swatch-custom input[type="color"] { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; border: 0; padding: 0; cursor: pointer; }
+
+.toggles { display: grid; gap: 8px; }
+.toggle { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; cursor: pointer; }
+.toggle input { margin: 3px 0 0; width: 16px; height: 16px; accent-color: var(--primary); flex: none; }
+
+.engines { display: grid; gap: 8px; }
+.field.engines > .engine {
+  display: flex; gap: 10px; align-items: flex-start;
+  margin: 0;
+  font-weight: 400;
+  padding: 10px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-m);
+  cursor: pointer;
+}
+.field.engines > .engine:has(input:checked) { border-color: var(--primary); background: var(--dusk); }
+.engine input { margin: 3px 0 0; accent-color: var(--primary); flex: none; }
+.engine b { display: block; font-size: 14px; }
+.engine small { display: block; font-size: 13px; color: var(--ink-soft); line-height: 1.4; }
+
+select, textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-s);
+  background: var(--paper);
+  color: #241b35;
+}
+textarea { resize: vertical; font-size: 14px; }
+
+.note { margin: 0 0 12px; font-size: 13px; color: var(--ink-soft); }
+.credit { margin: 14px 0 0; font-size: 12.5px; color: var(--ink-soft); }
+.credit a { color: var(--primary); font-weight: 700; }
+
+/* ---------- Viewer and pages ---------- */
+.viewer {
+  position: relative;
+  overflow: auto;
+  background: var(--dusk-deep);
+  scrollbar-gutter: stable;
+}
+.pages {
+  position: relative;
+  min-height: 100%;
+  padding: 28px 28px 120px;
+}
+
+.doc { margin: 0 auto 8px; max-width: 780px; }
+.doc + .doc { margin-top: 44px; }
+.doc-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
+  margin: 0 0 12px; padding: 0 2px;
+}
+.doc-title { margin: 0; font-size: 16px; font-weight: 700; overflow-wrap: anywhere; }
+.doc-meta { margin: 0; font-size: 13px; color: var(--ink-soft); white-space: nowrap; }
+.doc-failed {
+  padding: 24px; border-radius: var(--radius-m); background: var(--panel);
+  color: var(--ink-soft); font-size: 14px;
+}
+
+.page {
+  position: relative;
+  margin: 0 0 30px;
+  padding: 60px 72px 34px;
+  background: var(--paper);
+  color: #241b35;
+  border-radius: 3px;
+  box-shadow: 0 1px 2px rgba(36, 27, 53, .12), 0 14px 32px -20px rgba(36, 27, 53, .5);
+}
+.page-body p {
+  margin: 0 0 1.05em;
+  font-family: var(--font-doc);
+  font-size: 17px;
+  line-height: 1.78;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  hyphens: none;
+}
+.page-body p:last-child { margin-bottom: 0; }
+.page-body .no-text { font-family: var(--font-ui); font-style: italic; color: #8a8299; }
+.page-foot {
+  margin-top: 30px; text-align: center;
+  font-size: 12.5px; color: #8a8299;
+}
+.page.is-checking .page-foot::after { content: " (checking…)"; }
+
+/* Mistakes stay invisible until the spider reaches them */
+mark.err { background: transparent; color: inherit; border-radius: 3px; }
+mark.err.caught {
+  --c: var(--c-spelling);
+  background: rgb(var(--c) / .11);
+  box-shadow: 0 0 0 2px rgb(var(--c));
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  cursor: pointer;
+}
+mark.err.cat-grammar { --c: var(--c-grammar); }
+mark.err.cat-style { --c: var(--c-style); }
+mark.err.caught.lasso { animation: lasso .55s cubic-bezier(.2, .9, .3, 1.2); }
+mark.err.caught.flash { animation: flash 1.2s ease-out; }
+
+@keyframes lasso {
+  0% { box-shadow: 0 0 0 18px rgb(var(--c) / 0); background: rgb(var(--c) / 0); }
+  60% { box-shadow: 0 0 0 1px rgb(var(--c) / 1); }
+  100% { box-shadow: 0 0 0 2px rgb(var(--c) / 1); background: rgb(var(--c) / .11); }
+}
+@keyframes flash {
+  0%, 40% { background: rgb(var(--c) / .45); box-shadow: 0 0 0 5px rgb(var(--c) / .55); }
+  100% { background: rgb(var(--c) / .11); box-shadow: 0 0 0 2px rgb(var(--c)); }
+}
+
+/* Hidden kinds of mistakes */
+.pages.hide-spelling mark.err.cat-spelling,
+.pages.hide-grammar mark.err.cat-grammar,
+.pages.hide-style mark.err.cat-style { background: transparent; box-shadow: none; animation: none; cursor: auto; }
+.caught-list.hide-spelling .ci.cat-spelling,
+.caught-list.hide-grammar .ci.cat-grammar,
+.caught-list.hide-style .ci.cat-style { display: none; }
+
+/* ---------- Spider layer ---------- */
+.spider {
+  position: absolute; left: 0; top: 0;
+  z-index: 6;
+  pointer-events: none;
+  overflow: visible;
+  will-change: transform;
+  filter: drop-shadow(0 3px 2px rgba(25, 15, 40, .3));
+}
+.silk {
+  position: absolute; left: 0; top: 0;
+  z-index: 5;
+  height: 1.5px;
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, rgba(150, 140, 180, .25), rgba(150, 140, 180, .9));
+  pointer-events: none;
+  display: none;
+}
+.bubble {
+  position: absolute; left: 0; top: 0;
+  z-index: 7;
+  padding: 6px 11px;
+  border-radius: 12px;
+  background: #241b35;
+  color: #fff;
+  font-size: 13px; font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.bubble::after {
+  content: ""; position: absolute; left: 50%; bottom: -5px;
+  width: 10px; height: 10px; margin-left: -5px;
+  background: inherit; transform: rotate(45deg);
+}
+
+/* ---------- Empty state ---------- */
+.empty {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 0 0 40px;
+  text-align: center;
+}
+.empty-art {
+  position: relative;
+  width: 200px; height: 250px;
+  margin: -28px auto 8px;
+}
+.empty-thread {
+  position: absolute; left: 50%; top: 0;
+  width: 1.5px; height: 90px; margin-left: -.75px;
+  background: var(--silk);
+  transform-origin: 50% 0;
+}
+.empty-art .spider { filter: drop-shadow(0 8px 6px rgba(25, 15, 40, .25)); }
+.empty-title {
+  margin: 0 0 10px;
+  font-family: var(--font-doc);
+  font-weight: 600;
+  font-size: clamp(26px, 3.4vw, 36px);
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+}
+.empty-text { margin: 0 auto 22px; max-width: 46ch; color: var(--ink-soft); font-size: 16px; }
+.empty-actions { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+
+/* ---------- Caught panel ---------- */
+.caught-head { padding: 18px 20px 12px; border-bottom: 1px solid var(--line); }
+.caught-head h2 { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.caught-count { font-size: 28px; line-height: 1; font-variant-numeric: tabular-nums; }
+.filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 9px 4px 8px;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  font-size: 13px; cursor: pointer;
+}
+.chip i { width: 10px; height: 10px; border-radius: 50%; background: rgb(var(--c)); }
+.chip b { font-variant-numeric: tabular-nums; }
+.chip[data-cat="spelling"] { --c: var(--c-spelling); }
+.chip[data-cat="grammar"] { --c: var(--c-grammar); }
+.chip[data-cat="style"] { --c: var(--c-style); }
+.chip[aria-pressed="false"] { opacity: .55; }
+.chip[aria-pressed="false"] i { background: transparent; box-shadow: inset 0 0 0 1.5px rgb(var(--c)); }
+
+.caught-scroll { flex: 1; overflow-y: auto; padding: 4px 0 12px; }
+.caught-empty { margin: 16px 20px; color: var(--ink-soft); font-size: 14px; }
+.caught-list { list-style: none; margin: 0; padding: 0; }
+.ci-group { padding: 0; }
+.ci-doc {
+  position: sticky; top: 0; z-index: 1;
+  margin: 0; padding: 10px 20px 6px;
+  background: var(--panel);
+  font-size: 13px; font-weight: 700; color: var(--ink-soft);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ci-items { list-style: none; margin: 0; padding: 0; }
+.ci { --c: var(--c-spelling); }
+.ci.cat-grammar { --c: var(--c-grammar); }
+.ci.cat-style { --c: var(--c-style); }
+.ci-btn {
+  display: block; width: 100%;
+  padding: 9px 20px 10px 17px;
+  border: 0; border-left: 3px solid rgb(var(--c));
+  background: transparent;
+  text-align: left; cursor: pointer;
+}
+.ci-btn:hover { background: var(--dusk); }
+.ci.is-active .ci-btn { background: rgb(var(--c) / .12); }
+.ci.is-new .ci-btn { animation: arrive .6s ease-out; }
+@keyframes arrive { from { background: rgb(var(--c) / .22); } to { background: transparent; } }
+.ci-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.ci-word { font-family: var(--font-doc); font-weight: 600; font-size: 15px; overflow-wrap: anywhere; }
+.ci-where { flex: none; font-size: 12px; color: var(--ink-faint); }
+.ci-msg { display: block; margin-top: 1px; font-size: 13px; color: var(--ink-soft); line-height: 1.4; }
+.ci-fix { display: block; margin-top: 3px; font-size: 13px; font-weight: 700; color: rgb(var(--c)); }
+.caught-foot { padding: 12px 20px 16px; border-top: 1px solid var(--line); }
+
+/* ---------- Overlays ---------- */
+.drop-overlay {
+  position: fixed; inset: 0; z-index: 50;
+  display: grid; place-items: center;
+  background: rgba(36, 27, 53, .55);
+  pointer-events: none;
+}
+.drop-overlay p {
+  margin: 0; padding: 22px 30px;
+  border: 2px dashed #fff; border-radius: 16px;
+  color: #fff; font-size: 20px; font-weight: 700;
+}
+.toast {
+  position: fixed; left: 50%; bottom: 22px; z-index: 60;
+  transform: translateX(-50%);
+  max-width: min(560px, calc(100vw - 32px));
+  padding: 12px 16px;
+  border-radius: var(--radius-m);
+  background: #241b35; color: #fff;
+  font-size: 14px;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, .5);
+}
+
+/* ---------- Smaller screens ---------- */
+@media (max-width: 1180px) {
+  body { display: block; height: auto; }
+  .layout { display: flex; flex-direction: column; height: auto; }
+  .viewer { order: 1; height: 72vh; height: 72dvh; }
+  .panel-caught { order: 2; border-left: 0; border-top: 1px solid var(--line); max-height: 60vh; }
+  .panel-settings { order: 3; border-right: 0; border-top: 1px solid var(--line); }
+  .status { flex-basis: 100%; margin: 0; text-align: left; max-width: none; }
+}
+@media (max-width: 640px) {
+  .topbar { padding: 10px 16px; gap: 10px 14px; }
+  .run { width: 100%; }
+  .run .btn { flex: 1; padding: 0 8px; }
+  .run .btn-primary { min-width: 0; }
+  .speed { width: 100%; }
+  .speed input { flex: 1; width: auto; }
+  .pages { padding: 16px 12px 100px; }
+  .page { padding: 32px 22px 24px; }
+  .page-body p { font-size: 16px; line-height: 1.72; }
+  .panel-settings { padding: 8px 16px 24px; }
+  .caught-head, .caught-foot { padding-left: 16px; padding-right: 16px; }
+  .ci-btn { padding-left: 13px; padding-right: 16px; }
+  .ci-doc { padding-left: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  mark.err.caught.lasso, mark.err.caught.flash, .ci.is-new .ci-btn { animation: none; }
+}
+
+</style>
 </head>
 <body>
   <header class="topbar">
@@ -164,9 +717,2585 @@
   <div id="dropOverlay" class="drop-overlay" hidden><p>Drop to add documents</p></div>
   <div id="toast" class="toast" role="alert" hidden></div>
 
-  <script src="js/checker.js"></script>
-  <script src="js/extract.js"></script>
-  <script src="js/spider.js"></script>
-  <script src="js/app.js"></script>
+  <script>
+/* ---- js/checker.js ---- */
+/* ==========================================================================
+   Spell Spider — checking engines
+   Two engines share one shape: check(text) -> Promise<Match[]>
+   A Match is { offset, length, message, replacements[], category, ruleId }
+   category is one of: "spelling" | "grammar" | "style"
+   ========================================================================== */
+(function () {
+  "use strict";
+
+  const TYPO_URL = "https://cdn.jsdelivr.net/npm/typo-js@1.4.0/typo.js";
+  const DICT_BASE = "https://cdn.jsdelivr.net/npm/typo-js@1.4.0/dictionaries/en_US/en_US";
+  const LT_URL = "https://api.languagetool.org/v2/check";
+
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const existing = document.querySelector(`script[data-src="${src}"]`);
+      if (existing) {
+        if (existing.dataset.loaded) return resolve();
+        existing.addEventListener("load", () => resolve());
+        existing.addEventListener("error", () => reject(new Error("Could not load " + src)));
+        return;
+      }
+      const s = document.createElement("script");
+      s.src = src;
+      s.dataset.src = src;
+      s.async = true;
+      s.onload = () => { s.dataset.loaded = "1"; resolve(); };
+      s.onerror = () => reject(new Error("Could not load " + src));
+      document.head.appendChild(s);
+    });
+  }
+
+  /* Keep the capital letter of the original word when suggesting a fix. */
+  function matchCase(original, replacement) {
+    if (!original || !replacement) return replacement;
+    if (original.length > 1 && original === original.toUpperCase()) return replacement.toUpperCase();
+    if (original[0] === original[0].toUpperCase() && original[0] !== original[0].toLowerCase()) {
+      return replacement[0].toUpperCase() + replacement.slice(1);
+    }
+    return replacement;
+  }
+
+  /* Remove overlapping matches. Earlier start wins; on a tie, higher priority, then longer. */
+  function dedupe(matches) {
+    const sorted = matches.slice().sort((a, b) =>
+      a.offset - b.offset || (b.priority || 0) - (a.priority || 0) || b.length - a.length);
+    const out = [];
+    let end = -1;
+    for (const m of sorted) {
+      if (m.length <= 0) continue;
+      if (m.offset < end) continue;
+      out.push(m);
+      end = m.offset + m.length;
+    }
+    return out;
+  }
+
+  /* ------------------------------------------------------------------------
+     LanguageTool (online). Free public API limits, per IP:
+     20 requests/min (peak), 75 KB of text/min, 20 KB per request.
+     We stay well under them and wait politely when we get close.
+     ------------------------------------------------------------------------ */
+  const LanguageTool = {
+    name: "LanguageTool",
+    maxRequestBytes: 14000,
+    _log: [],
+    onWait: null,
+
+    _bytes(text) {
+      return new TextEncoder().encode(text).length;
+    },
+
+    async _waitTurn(bytes) {
+      let announced = false;
+      for (;;) {
+        const now = Date.now();
+        this._log = this._log.filter((x) => now - x.t < 60000);
+        const used = this._log.reduce((a, x) => a + x.bytes, 0);
+        const last = this._log.length ? this._log[this._log.length - 1].t : 0;
+        const okCount = this._log.length < 12;
+        const okBytes = used + bytes <= 68000;
+        const okGap = now - last >= 2500;
+        if (okCount && okBytes && okGap) {
+          this._log.push({ t: now, bytes });
+          if (announced && this.onWait) this.onWait(false);
+          return;
+        }
+        let wait = 400;
+        if (!okGap) wait = Math.max(wait, 2500 - (now - last));
+        if ((!okCount || !okBytes) && this._log.length) {
+          wait = Math.max(wait, 60000 - (now - this._log[0].t) + 50);
+          if (!announced && this.onWait) { this.onWait(true); announced = true; }
+        }
+        await sleep(Math.min(wait, 5000));
+      }
+    },
+
+    _category(rule) {
+      if (!rule) return "grammar";
+      const issue = (rule.issueType || "").toLowerCase();
+      const cat = ((rule.category && rule.category.id) || "").toUpperCase();
+      if (issue === "misspelling" || cat === "TYPOS") return "spelling";
+      if (issue === "grammar") return "grammar";
+      if (["GRAMMAR", "CONFUSED_WORDS", "CASING", "PUNCTUATION", "SEMANTICS",
+           "COLLOCATIONS", "NONSTANDARD_PHRASES", "MISC", "COMPOUNDING"].includes(cat)) return "grammar";
+      return "style";
+    },
+
+    async check(text, opts) {
+      opts = opts || {};
+      const bytes = this._bytes(text);
+      for (let attempt = 0; attempt < 3; attempt++) {
+        await this._waitTurn(bytes);
+        const body = new URLSearchParams({ text, language: opts.language || "en-US" });
+        let res;
+        try {
+          res = await fetch(LT_URL, { method: "POST", body, headers: { Accept: "application/json" } });
+        } catch (err) {
+          throw new Error("Could not reach LanguageTool. Check your internet connection.");
+        }
+        if (res.status === 429) {
+          if (this.onWait) this.onWait(true);
+          await sleep(20000 * (attempt + 1));
+          continue;
+        }
+        if (!res.ok) throw new Error("LanguageTool answered with error " + res.status + ".");
+        const data = await res.json();
+        return (data.matches || []).map((m) => ({
+          offset: m.offset,
+          length: m.length,
+          message: m.message || (m.rule && m.rule.description) || "Possible problem.",
+          replacements: (m.replacements || []).slice(0, 5).map((r) => r.value).filter(Boolean),
+          category: this._category(m.rule),
+          ruleId: m.rule ? m.rule.id : "",
+          priority: 1,
+        }));
+      }
+      throw new Error("LanguageTool is busy right now (too many requests).");
+    },
+  };
+
+  /* ------------------------------------------------------------------------
+     Built-in engine: Hunspell en_US dictionary (via Typo.js) for spelling,
+     plus a set of hand-written grammar and punctuation rules.
+     Everything runs in the browser; no text leaves the page.
+     ------------------------------------------------------------------------ */
+  const EXTRA_WORDS = new Set((
+    "ok okay emoji emojis selfie selfies blog blogs vlog vlogs livestream livestreams " +
+    "wifi smartphone smartphones online gameplay esports gif gifs app apps website websites " +
+    "email emails username usernames login logout signup inbox hashtag hashtags podcast podcasts " +
+    "youtube youtuber tiktok instagram roblox minecraft fortnite discord github google googled " +
+    "screenshot screenshots playlist playlists unfollow multiplayer singleplayer npc npcs " +
+    "gamepad touchscreen spreadsheet spreadsheets dropdown checkbox checkboxes laptop laptops " +
+    "texted texting lol omg btw fyi diy gameplay coworker coworkers healthcare"
+  ).split(/\s+/));
+
+  const COMMON_FIXES = {
+    teh: "the", adn: "and", recieve: "receive", recieved: "received", beleive: "believe",
+    beleived: "believed", definately: "definitely", definatly: "definitely", seperate: "separate",
+    seperately: "separately", occured: "occurred", occurence: "occurrence", untill: "until",
+    wich: "which", becuase: "because", beacuse: "because", becasue: "because", alot: "a lot",
+    thier: "their", freind: "friend", freinds: "friends", wierd: "weird", truely: "truly",
+    tommorow: "tomorrow", tommorrow: "tomorrow", goverment: "government", enviroment: "environment",
+    neccessary: "necessary", necesary: "necessary", accomodate: "accommodate", acheive: "achieve",
+    arguement: "argument", begining: "beginning", calender: "calendar", cemetary: "cemetery",
+    concious: "conscious", embarass: "embarrass", existance: "existence", foriegn: "foreign",
+    grammer: "grammar", happend: "happened", independant: "independent", knowlege: "knowledge",
+    libary: "library", noticable: "noticeable", occassion: "occasion", posession: "possession",
+    publically: "publicly", realy: "really", recomend: "recommend", refered: "referred",
+    responsability: "responsibility", rythm: "rhythm", sucess: "success", succesful: "successful",
+    suprise: "surprise", tounge: "tongue", writting: "writing", wether: "whether",
+    youre: "you're", dont: "don't", doesnt: "doesn't", didnt: "didn't", cant: "can't",
+    wont: "won't", isnt: "isn't", wasnt: "wasn't", im: "I'm", ive: "I've", thats: "that's",
+    whats: "what's", theyre: "they're", couldnt: "couldn't", wouldnt: "wouldn't", shouldnt: "shouldn't",
+    shelfs: "shelves", knifes: "knives", wifes: "wives", lifes: "lives", wolfs: "wolves", childs: "children",
+    womans: "women's", gonna: "going to",
+  };
+
+  const ABBREVIATIONS = new Set((
+    "mr mrs ms dr prof sr jr st vs etc e.g i.e a.m p.m approx dept est fig figs inc ltd co corp " +
+    "jan feb mar apr jun jul aug sep sept oct nov dec mon tue tues wed thu thur thurs fri sat sun " +
+    "no nos vol vols ch chap pg pp p ed eds al cf ca min max mt ft lb lbs oz in yr yrs hr hrs u.s"
+  ).split(/\s+/));
+
+  const PARTICIPLES = {
+    went: "gone", ate: "eaten", wrote: "written", took: "taken", drove: "driven", rode: "ridden",
+    spoke: "spoken", broke: "broken", chose: "chosen", froze: "frozen", stole: "stolen",
+    swam: "swum", drank: "drunk", sang: "sung", began: "begun", ran: "run", gave: "given",
+    forgot: "forgotten", knew: "known", grew: "grown", threw: "thrown", flew: "flown",
+    shook: "shaken", wore: "worn", tore: "torn", hid: "hidden", bit: "bitten", fell: "fallen",
+  };
+
+  const COMPARATIVES = (
+    "more less better worse rather greater fewer larger smaller higher lower faster slower bigger " +
+    "older younger easier harder stronger weaker longer shorter darker lighter colder hotter warmer " +
+    "cooler louder quieter taller cheaper richer poorer smarter nicer happier sadder scarier prettier " +
+    "uglier safer wider deeper heavier quicker brighter cleaner closer farther newer simpler tougher " +
+    "weirder funnier crazier busier earlier sooner bolder calmer kinder meaner softer sweeter thicker thinner"
+  ).split(" ");
+  const SUPERLATIVES = COMPARATIVES
+    .filter((w) => /er$/.test(w) && !["more", "less", "rather", "better", "worse", "fewer"].includes(w))
+    .map((w) => w.replace(/er$/, "est"))
+    .concat(["best", "worst"]);
+  const COMPARE_RE = COMPARATIVES.join("|");
+  const DOUBLE_RE = COMPARATIVES.filter((w) => !["more", "less", "rather", "fewer"].includes(w))
+    .concat(SUPERLATIVES).join("|");
+
+  const AUX_BEFORE_HAVE = new Set(("does did do will would can could should might must may shall to let " +
+    "make makes made help helps helped watch saw see hear heard had doesn't didn't won't wouldn't can't " +
+    "couldn't shouldn't don't").split(" "));
+
+  const BE_FORMS = new Set("am is are was were be been being i'm you're we're they're he's she's it's not".split(" "));
+
+  /* Edit distance where swapping two neighbouring letters counts as one edit.
+     Gives up early once the distance must be bigger than max. */
+  function osaDistance(a, b, max) {
+    const n = a.length, m = b.length;
+    if (Math.abs(n - m) > max) return max + 1;
+    let prev2 = null, prev = new Array(m + 1), cur = new Array(m + 1);
+    for (let j = 0; j <= m; j++) prev[j] = j;
+    for (let i = 1; i <= n; i++) {
+      cur[0] = i;
+      let rowMin = cur[0];
+      for (let j = 1; j <= m; j++) {
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        let v = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+        if (prev2 && i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) v = Math.min(v, prev2[j - 2] + 1);
+        cur[j] = v;
+        if (v < rowMin) rowMin = v;
+      }
+      if (rowMin > max) return max + 1;
+      const tmp = prev2 || new Array(m + 1);
+      prev2 = prev; prev = cur; cur = tmp;
+    }
+    return prev[m];
+  }
+
+  function prevWord(text, index) {
+    const m = text.slice(0, index).match(/([A-Za-z'’]+)\s*$/);
+    return m ? m[1].toLowerCase().replace(/’/g, "'") : "";
+  }
+
+  /* Each rule returns matches for one block of text. */
+  const RULES = [
+    { // a + vowel sound
+      id: "A_AN", category: "grammar",
+      re: /\b([Aa])\s+([A-Za-z][\w'’-]*)/g,
+      test(m, text) {
+        const w = m[2];
+        if (w.length < 2 || w === w.toUpperCase()) return null;
+        if (m[1] === "A") {
+          // A capital "A" mid-sentence is usually a label or grade ("Plan A is"), not the article.
+          const before = text.slice(0, m.index).replace(/["'“‘(\[\s]+$/, "");
+          if (before.length && !/[.!?:]$/.test(before)) return null;
+        }
+        const lw = w.toLowerCase();
+        const needsAn =
+          (/^[aeio]/.test(lw) && !/^(one|once|eu|ewe)/.test(lw)) ||
+          (/^u/.test(lw) && !/^u(ni(?![mnd])|nan|s[eua]|t[ieo]|r[aeiou]|b[ie]|kr|vu|ku|ga)/.test(lw)) ||
+          /^(hour|honest|honor|honour|heir)/.test(lw);
+        if (!needsAn) return null;
+        return { offset: m.index, length: m[1].length,
+          message: `Use “an” before “${w}”, because it starts with a vowel sound.`,
+          replacements: [matchCase(m[1], "an")] };
+      },
+    },
+    { // an + consonant sound
+      id: "AN_A", category: "grammar",
+      re: /\b([Aa]n)\s+([A-Za-z][\w'’-]*)/g,
+      test(m) {
+        const w = m[2];
+        if (w.length < 2 || w === w.toUpperCase()) return null;
+        const lw = w.toLowerCase();
+        if (/^(hour|honest|honor|honour|heir|herb|histor)/.test(lw)) return null;
+        const consonant =
+          (/^[bcdfgjklmnpqrstvwyz]/.test(lw)) ||
+          /^(uni(?![mnd])|unan|us[eua]|ut[ieo]|ur[aeiou]|eu|ewe|one\b|once)/.test(lw);
+        if (!consonant) return null;
+        return { offset: m.index, length: m[1].length,
+          message: `Use “a” before “${w}”, because it starts with a consonant sound.`,
+          replacements: [matchCase(m[1], "a")] };
+      },
+    },
+    { // repeated word
+      id: "REPEATED_WORD", category: "grammar",
+      re: /\b([A-Za-z]+)\s+(\1)\b/gi,
+      test(m) {
+        const pair = (m[1] + " " + m[2]).toLowerCase();
+        if (["had had", "that that", "bye bye", "no no", "so so"].includes(pair)) return null;
+        return { offset: m.index, length: m[0].length,
+          message: `The word “${m[1]}” is repeated.`, replacements: [m[1]] };
+      },
+    },
+    { // lowercase letter starting a sentence
+      id: "SENTENCE_CAPITAL", category: "grammar",
+      re: /([.!?])(["'”’)\]]?)\s+([a-z][a-z'’]*)/g,
+      test(m, text) {
+        const before = text.slice(0, m.index + 1);
+        const token = (before.match(/(\S+)$/) || ["", ""])[1];
+        const bare = token.toLowerCase().replace(/[.!?]+$/, "").replace(/^[("'“‘[]+/, "");
+        if (m[1] === "." && (text[m.index - 1] === "." || /\.\.$/.test(token))) return null; // ellipsis
+        if (ABBREVIATIONS.has(bare) || ABBREVIATIONS.has(bare.replace(/\./g, ""))) return null;
+        if (/^[a-z]$/i.test(bare) || /^([a-z]\.)+[a-z]?$/i.test(bare)) return null;
+        if (/\d$/.test(bare) || /[\/@]/.test(token)) return null;
+        const word = m[3];
+        const start = m.index + m[0].length - word.length;
+        return { offset: start, length: word.length,
+          message: "Start a new sentence with a capital letter.",
+          replacements: [word[0].toUpperCase() + word.slice(1)] };
+      },
+    },
+    { // lowercase "i" used as a pronoun
+      id: "LOWERCASE_I", category: "grammar",
+      re: /(^|[\s"“(])(i)(?=$|[\s,;:!?'’"”)]|\.(?![a-z]))/g,
+      test(m, text) {
+        const start = m.index + m[1].length;
+        if (m[1] === "(" && text[start + 1] === ")") return null;
+        return { offset: start, length: 1, message: "Write the word “I” as a capital letter.", replacements: ["I"] };
+      },
+    },
+    { // phrase confusions
+      id: "COULD_OF", category: "grammar",
+      re: /\b(could|would|should|must|might|may|could\s*n['’]t|would\s*n['’]t|should\s*n['’]t)\s+(of)\b/gi,
+      test(m) {
+        const start = m.index + m[0].length - m[2].length;
+        return { offset: start, length: 2, message: `Use “have” after “${m[1]}”, not “of”.`,
+          replacements: [matchCase(m[2], "have")] };
+      },
+    },
+    {
+      id: "THAN_THEN", category: "grammar",
+      re: new RegExp(`\\b(${COMPARE_RE})\\s+(then)\\b`, "gi"),
+      test(m) {
+        const start = m.index + m[0].length - 4;
+        return { offset: start, length: 4, message: "Use “than” when comparing things.",
+          replacements: [matchCase(m[2], "than")] };
+      },
+    },
+    {
+      id: "THEIR_IS", category: "grammar",
+      re: /\b(their)\s+(is|are|was|were|will be|has been|have been)\b/gi,
+      test(m) {
+        return { offset: m.index, length: m[1].length,
+          message: "“Their” means belonging to them. Here you probably mean “there”.",
+          replacements: [matchCase(m[1], "there")] };
+      },
+    },
+    {
+      id: "THERE_OWN", category: "grammar",
+      re: /\b(there|they['’]re)\s+(own|car|cars|house|houses|book|books|phone|phones|dog|dogs|cat|cats|parents|friends|names?|family|teacher|homework|room|rooms)\b/gi,
+      test(m, text) {
+        if (/^there$/i.test(m[1]) && /\b(over|in|out|up|down|from|go|went|get|got)\s*$/i.test(text.slice(0, m.index))) return null;
+        return { offset: m.index, length: m[1].length,
+          message: `Use “their” to show something belongs to them.`,
+          replacements: [matchCase(m[1], "their")] };
+      },
+    },
+    {
+      id: "YOUR_YOURE", category: "grammar",
+      re: /\b(your)\s+(welcome|not|going\s+to|so|too|the|a|an|gonna|probably|really)\b/gi,
+      test(m) {
+        return { offset: m.index, length: m[1].length,
+          message: "“Your” shows ownership. Here you probably mean “you're” (you are).",
+          replacements: [matchCase(m[1], "you're")] };
+      },
+    },
+    {
+      id: "ITS_ITS", category: "grammar",
+      re: /\b(its)\s+(a|an|the|not|been|going|so|just|okay|ok|gonna|hard\s+to|easy\s+to|time\s+to)\b/gi,
+      test(m) {
+        return { offset: m.index, length: m[1].length,
+          message: "“Its” shows ownership. Here you probably mean “it's” (it is).",
+          replacements: [matchCase(m[1], "it's")] };
+      },
+    },
+    {
+      id: "WHOS_WHOSE", category: "grammar",
+      re: /\b(who['’]s)\s+(car|house|book|phone|turn|idea|fault|job|bag|dog|cat|name|side|team)\b/gi,
+      test(m) {
+        return { offset: m.index, length: m[1].length,
+          message: "Use “whose” to ask who something belongs to.",
+          replacements: [matchCase(m[1], "whose")] };
+      },
+    },
+    {
+      id: "HE_DONT", category: "grammar",
+      re: /\b(he|she|it)\s+(don['’]t)\b/gi,
+      test(m) {
+        const start = m.index + m[0].length - m[2].length;
+        return { offset: start, length: m[2].length, message: `Use “doesn't” with “${m[1]}”.`,
+          replacements: ["doesn't"] };
+      },
+    },
+    {
+      id: "THEY_WAS", category: "grammar",
+      re: /\b(they|we|you)\s+(was)\b/gi,
+      test(m) {
+        const start = m.index + m[0].length - 3;
+        return { offset: start, length: 3, message: `Use “were” with “${m[1]}”.`, replacements: ["were"] };
+      },
+    },
+    {
+      id: "HE_HAVE", category: "grammar",
+      re: /\b(he|she|it)\s+(have)\b/gi,
+      test(m, text) {
+        if (AUX_BEFORE_HAVE.has(prevWord(text, m.index))) return null;
+        const start = m.index + m[0].length - 4;
+        return { offset: start, length: 4, message: `Use “has” with “${m[1]}”.`, replacements: ["has"] };
+      },
+    },
+    {
+      id: "I_SEEN", category: "grammar",
+      re: /\b(I|we|they|you)\s+(seen)\b/gi,
+      test(m) {
+        const start = m.index + m[0].length - 4;
+        return { offset: start, length: 4, message: "Use “saw”, or “have seen”.", replacements: ["saw", "have seen"] };
+      },
+    },
+    {
+      id: "HAVE_WENT", category: "grammar",
+      re: /\b(have|has|had|having|'ve|’ve)\s+(went|ate|wrote|took|drove|rode|spoke|broke|chose|froze|stole|swam|drank|sang|began|ran|gave|forgot|knew|grew|threw|flew|shook|wore|tore|fell)\b/gi,
+      test(m) {
+        const verb = m[2].toLowerCase();
+        const start = m.index + m[0].length - m[2].length;
+        return { offset: start, length: m[2].length,
+          message: `After “${m[1].replace(/^['’]/, "")}”, use “${PARTICIPLES[verb]}” instead of “${m[2]}”.`,
+          replacements: [PARTICIPLES[verb]] };
+      },
+    },
+    {
+      id: "SUPPOSE_TO", category: "grammar",
+      re: /\b(suppose)\s+to\b/gi,
+      test(m, text) {
+        if (!BE_FORMS.has(prevWord(text, m.index))) return null;
+        return { offset: m.index, length: m[1].length, message: "Write “supposed to”.",
+          replacements: [matchCase(m[1], "supposed")] };
+      },
+    },
+    {
+      id: "LOOSE_LOSE", category: "grammar",
+      re: /\b(loose)\s+(weight|my|your|his|her|their|our|it|them|track|the\s+game|everything)\b/gi,
+      test(m) {
+        return { offset: m.index, length: m[1].length, message: "“Loose” means not tight. To misplace or fail to win is “lose”.",
+          replacements: [matchCase(m[1], "lose")] };
+      },
+    },
+    {
+      id: "AN_OTHER", category: "grammar",
+      re: /\b(an)\s+(other)\b/gi,
+      test(m) {
+        return { offset: m.index, length: m[0].length, message: "Write “another” as one word.",
+          replacements: [matchCase(m[1], "another")] };
+      },
+    },
+    {
+      id: "ALOT", category: "spelling",
+      re: /\b(alot)\b/gi,
+      test(m) {
+        return { offset: m.index, length: 4, message: "“A lot” is two words.", replacements: [matchCase(m[1], "a lot")] };
+      },
+    },
+    {
+      id: "IRREGARDLESS", category: "style",
+      re: /\b(irregardless)\b/gi,
+      test(m) {
+        return { offset: m.index, length: m[1].length, message: "Use “regardless” instead.",
+          replacements: [matchCase(m[1], "regardless")] };
+      },
+    },
+    {
+      id: "DOUBLE_COMPARATIVE", category: "grammar",
+      re: new RegExp(`\\b(more|most)\\s+(${DOUBLE_RE})\\b`, "gi"),
+      test(m) {
+        return { offset: m.index, length: m[0].length, message: `“${m[2]}” already compares, so drop “${m[1]}”.`,
+          replacements: [matchCase(m[1], m[2].toLowerCase())] };
+      },
+    },
+    {
+      id: "LESS_FEWER", category: "style",
+      re: /\b(less)\s+(people|students|cars|things|items|errors|mistakes|words|books|games|players|friends|times|days|hours|minutes|years|calories|options|choices)\b/gi,
+      test(m) {
+        return { offset: m.index, length: m[1].length, message: "Use “fewer” for things you can count.",
+          replacements: [matchCase(m[1], "fewer")] };
+      },
+    },
+    { // space before punctuation
+      id: "SPACE_BEFORE_PUNCT", category: "style",
+      re: /(\S)([ \t]+)([,.;:!?])(?=\s|$)/g,
+      test(m) {
+        if (m[3] === "." && /[.]/.test(m[1])) return null;
+        const start = m.index + 1;
+        return { offset: start, length: m[2].length + 1, message: "Remove the space before the punctuation mark.",
+          replacements: [m[3]] };
+      },
+    },
+    { // missing space after comma
+      id: "COMMA_SPACE", category: "style",
+      re: /([A-Za-z]),([A-Za-z])/g,
+      test(m) {
+        return { offset: m.index + 1, length: 2, message: "Add a space after the comma.",
+          replacements: [", " + m[2]] };
+      },
+    },
+    { // missing space after a sentence
+      id: "SENTENCE_SPACE", category: "style",
+      re: /([a-z]{2,}[.!?])([A-Z][a-z]+)/g,
+      test(m, text) {
+        const left = text.slice(Math.max(0, m.index - 30), m.index + m[0].length);
+        if (/[\/@]|www|https?|\.(com|org|net|io|js|py|html)/i.test(left)) return null;
+        return { offset: m.index + m[1].length - 1, length: 1 + m[2].length,
+          message: "Add a space between sentences.", replacements: [m[1].slice(-1) + " " + m[2]] };
+      },
+    },
+    { // double spaces between words
+      id: "DOUBLE_SPACE", category: "style",
+      re: /(\S)( {2,})(?=\S)/g,
+      test(m) {
+        return { offset: m.index + 1, length: m[2].length, message: "There is more than one space here.", replacements: [" "] };
+      },
+    },
+    { // repeated punctuation
+      id: "DOUBLE_PUNCT", category: "style",
+      re: /,{2,}|;{2,}|(?<!\.)\.\.(?!\.)/g,
+      test(m) {
+        return { offset: m.index, length: m[0].length, message: "This punctuation mark is repeated.",
+          replacements: [m[0][0] === "." ? "." : m[0][0], m[0][0] === "." ? "…" : undefined].filter(Boolean) };
+      },
+    },
+  ];
+
+  const Builtin = {
+    name: "Built-in",
+    typo: null,
+    _loading: null,
+    dictionaryFailed: false,
+
+    load() {
+      if (this.typo) return Promise.resolve(this.typo);
+      if (!this._loading) {
+        this._loading = (async () => {
+          try {
+            await loadScript(TYPO_URL);
+            const [aff, dic] = await Promise.all([
+              fetch(DICT_BASE + ".aff").then((r) => { if (!r.ok) throw new Error(); return r.text(); }),
+              fetch(DICT_BASE + ".dic").then((r) => { if (!r.ok) throw new Error(); return r.text(); }),
+            ]);
+            await sleep(30); // let the page paint the "loading dictionary" message first
+            // eslint-disable-next-line no-undef
+            this.typo = new Typo("en_US", aff, dic);
+          } catch (e) {
+            this.dictionaryFailed = true;
+            this.typo = null;
+          }
+          return this.typo;
+        })();
+      }
+      return this._loading;
+    },
+
+    known(word) {
+      const w = word.replace(/’/g, "'");
+      const lw = w.toLowerCase();
+      if (EXTRA_WORDS.has(lw)) return true;
+      if (this.typo.check(w)) return true;
+      if (/'s$/i.test(w) && this.typo.check(w.slice(0, -2))) return true;
+      if (/s'$/i.test(w) && this.typo.check(w.slice(0, -1))) return true;
+      return false;
+    },
+
+    suggest(word) {
+      const lw = word.toLowerCase().replace(/’/g, "'");
+      const out = [];
+      const add = (s) => { if (s && !out.includes(s)) out.push(s); };
+      if (COMMON_FIXES[lw]) add(COMMON_FIXES[lw]);
+      if (/[^aeiou]ys$/.test(lw) && this.typo.check(lw.slice(0, -2) + "ies")) add(lw.slice(0, -2) + "ies"); // countrys -> countries
+      const letters = "abcdefghijklmnopqrstuvwxyz";
+      const n = lw.length;
+      const tryWord = (c) => { if (c && c !== lw && this.typo.check(c)) add(c); };
+      for (let i = 0; i < n - 1; i++) tryWord(lw.slice(0, i) + lw[i + 1] + lw[i] + lw.slice(i + 2));
+      for (let i = 0; i < n; i++) for (const ch of letters) if (ch !== lw[i]) tryWord(lw.slice(0, i) + ch + lw.slice(i + 1));
+      for (let i = 0; i < n; i++) tryWord(lw.slice(0, i) + lw.slice(i + 1));
+      for (let i = 0; i <= n; i++) for (const ch of letters) tryWord(lw.slice(0, i) + ch + lw.slice(i));
+      if (out.length < 2) {
+        for (const c of this.nearby(lw)) add(c);
+      }
+      if (out.length < 2) {
+        for (let i = 1; i < n; i++) {
+          const a = lw.slice(0, i), b = lw.slice(i);
+          if ((a.length > 1 || a === "a" || a === "i") && b.length > 1 && this.typo.check(a) && this.typo.check(b)) add(a + " " + b);
+        }
+      }
+      return out.slice(0, 4).map((s) => matchCase(word, s));
+    },
+
+    /* Words two small edits away (e.g. "schedual" -> "schedule"). Uses an index of
+       dictionary words grouped by first letter so it stays fast. */
+    nearby(word) {
+      if (!this._index) {
+        this._index = new Map();
+        for (const w of this.typo.dictionaryTable.keys()) {
+          if (w.length < 3 || /[^a-z']/.test(w)) continue;
+          const k = w[0];
+          if (!this._index.has(k)) this._index.set(k, []);
+          this._index.get(k).push(w);
+        }
+      }
+      const n = word.length;
+      if (n < 4 || n > 18) return [];
+      const keys = new Set([word[0], word[1]]); // allow the first two letters to be swapped
+      const found = [];
+      for (const k of keys) {
+        for (const w of this._index.get(k) || []) {
+          if (Math.abs(w.length - n) > 2) continue;
+          const d = osaDistance(word, w, 2);
+          if (d <= 2) found.push({ w, d, sameStart: w[0] === word[0] && w[1] === word[1] });
+        }
+      }
+      found.sort((a, b) => a.d - b.d || b.sameStart - a.sameStart || Math.abs(a.w.length - n) - Math.abs(b.w.length - n));
+      return found.slice(0, 3).map((f) => f.w);
+    },
+
+    spelling(text) {
+      const matches = [];
+      if (!this.typo) return matches;
+      const skip = [];
+      for (const m of text.matchAll(/\b(?:https?:\/\/|www\.)\S+|\S+@\S+\.\S+|\b\S+\.(?:com|org|net|io|edu|gov)\b\S*/gi)) {
+        skip.push([m.index, m.index + m[0].length]);
+      }
+      const inSkip = (i) => skip.some(([a, b]) => i >= a && i < b);
+      const wordRe = /[A-Za-zÀ-ɏ]+(?:['’][A-Za-z]+)*/g;
+      for (const m of text.matchAll(wordRe)) {
+        const w = m[0];
+        const i = m.index;
+        if (w.length < 2) continue;
+        if (/\d/.test(text[i - 1] || "") || /\d/.test(text[i + w.length] || "")) continue;
+        if (/[A-Z]/.test(w.slice(1))) continue; // acronyms, CamelCase, McNames
+        if (inSkip(i)) continue;
+        if (/^[A-Z]/.test(w)) {
+          // Capitalized words in the middle of a sentence are usually names. Skip them.
+          const before = text.slice(0, i).replace(/["'“‘(\[\s]+$/, "");
+          const sentenceStart = before.length === 0 || /[.!?:]$/.test(before) || /\n\s*$/.test(text.slice(0, i));
+          if (!sentenceStart) continue;
+        }
+        if (this.known(w)) continue;
+        const capital = w[0].toUpperCase() + w.slice(1);
+        if (capital !== w && this.typo.checkExact(capital)) {
+          // A real word that needs a capital letter: days, months, places, names
+          matches.push({ offset: i, length: w.length, word: w,
+            message: `Write “${capital}” with a capital letter.`, replacements: [capital],
+            category: "spelling", ruleId: "NEEDS_CAPITAL", priority: 1 });
+          continue;
+        }
+        matches.push({ offset: i, length: w.length, word: w,
+          message: `“${w}” may be misspelled.`, replacements: null, category: "spelling",
+          ruleId: "SPELLING", priority: 1 });
+      }
+      return matches;
+    },
+
+    grammar(text) {
+      const out = [];
+      for (const rule of RULES) {
+        rule.re.lastIndex = 0;
+        for (const m of text.matchAll(rule.re)) {
+          const r = rule.test(m, text);
+          if (r) out.push(Object.assign({ category: rule.category, ruleId: rule.id, priority: 2 }, r));
+        }
+      }
+      return out;
+    },
+
+    async check(text) {
+      await this.load();
+      const all = dedupe(this.grammar(text).concat(this.spelling(text)));
+      for (const m of all) {
+        if (m.replacements === null) {
+          try { m.replacements = this.suggest(m.word); } catch (e) { m.replacements = []; }
+        }
+      }
+      return all;
+    },
+  };
+
+  window.SpiderCheck = { LanguageTool, Builtin, dedupe, loadScript };
+})();
+
+</script>
+  <script>
+/* ---- js/extract.js ---- */
+/* ==========================================================================
+   Spell Spider — turning uploaded files into pages of paragraphs
+   Supports .txt / .md (plain text), .pdf (PDF.js) and .docx (mammoth.js)
+   Result: { kind, pages: [ { paragraphs: [string] } ] }
+   ========================================================================== */
+(function () {
+  "use strict";
+
+  const PDFJS = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js";
+  const PDFJS_WORKER = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
+  const MAMMOTH = "https://cdn.jsdelivr.net/npm/mammoth@1.13.0/mammoth.browser.min.js";
+
+  const TEXT_PAGE_CHARS = 2600; // how much plain text goes on one "page"
+
+  function kindOf(file) {
+    const name = file.name.toLowerCase();
+    if (name.endsWith(".pdf") || file.type === "application/pdf") return "pdf";
+    if (name.endsWith(".docx")) return "docx";
+    if (/\.(txt|md|markdown|text|rtf|csv|log)$/.test(name) || (file.type || "").startsWith("text/")) return "text";
+    return null;
+  }
+
+  /* Split one very long paragraph at sentence ends so a page never gets huge. */
+  function splitLong(para, max) {
+    if (para.length <= max) return [para];
+    const parts = [];
+    let rest = para;
+    while (rest.length > max) {
+      let cut = rest.lastIndexOf(". ", max);
+      if (cut < max * 0.5) cut = rest.lastIndexOf(" ", max);
+      if (cut < max * 0.3) cut = max;
+      parts.push(rest.slice(0, cut + 1).trimEnd());
+      rest = rest.slice(cut + 1).trimStart();
+    }
+    if (rest) parts.push(rest);
+    return parts;
+  }
+
+  function paginateText(text) {
+    const clean = text.replace(/\r\n?/g, "\n").replace(/ /g, " ").replace(/\t/g, "    ");
+    const paras = [];
+    for (const block of clean.split(/\n[ \t]*\n+/)) {
+      const p = block.replace(/^\n+|\s+$/g, "");
+      if (p.trim()) paras.push(...splitLong(p, TEXT_PAGE_CHARS));
+    }
+    const pages = [];
+    let cur = [], size = 0;
+    for (const p of paras) {
+      if (cur.length && size + p.length > TEXT_PAGE_CHARS) {
+        pages.push({ paragraphs: cur });
+        cur = []; size = 0;
+      }
+      cur.push(p);
+      size += p.length + 2;
+    }
+    if (cur.length) pages.push({ paragraphs: cur });
+    if (!pages.length) pages.push({ paragraphs: [] });
+    return pages;
+  }
+
+  async function readText(file) {
+    return paginateText(await file.text());
+  }
+
+  async function readDocx(file) {
+    await window.SpiderCheck.loadScript(MAMMOTH);
+    const result = await window.mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() });
+    return paginateText(result.value || "");
+  }
+
+  /* ---- PDF: rebuild lines and paragraphs from positioned text pieces ---- */
+  async function readPdf(file, onProgress) {
+    await window.SpiderCheck.loadScript(PDFJS);
+    const lib = window.pdfjsLib;
+    lib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
+    const pdf = await lib.getDocument({ data: await file.arrayBuffer() }).promise;
+    const pages = [];
+    for (let p = 1; p <= pdf.numPages; p++) {
+      if (onProgress) onProgress(p, pdf.numPages);
+      const page = await pdf.getPage(p);
+      const content = await page.getTextContent();
+      pages.push({ paragraphs: pdfParagraphs(content.items) });
+      page.cleanup();
+    }
+    return pages;
+  }
+
+  function pdfParagraphs(items) {
+    const lines = [];
+    let cur = null;
+    let lastEndX = null;
+    const pushLine = () => {
+      if (cur && cur.text.trim()) {
+        cur.text = cur.text.replace(/\s+/g, " ").trim();
+        lines.push(cur);
+      }
+      cur = null;
+      lastEndX = null;
+    };
+
+    for (const it of items) {
+      if (typeof it.str !== "string") continue;
+      const t = it.transform;
+      const x = t[4], y = t[5];
+      const size = Math.abs(t[3]) || Math.hypot(t[0], t[1]) || it.height || 10;
+      const str = it.str.normalize("NFKC");
+      if (cur && Math.abs(cur.y - y) > size * 0.45 && str.trim()) pushLine();
+      if (!cur) {
+        if (!str.trim()) { if (it.hasEOL) pushLine(); continue; }
+        cur = { y, size, left: x, right: x, text: "" };
+      }
+      if (lastEndX !== null && str && cur.text && !/\s$/.test(cur.text) && !/^\s/.test(str) &&
+          x - lastEndX > size * 0.12) {
+        cur.text += " ";
+      }
+      cur.text += str;
+      if (str.trim()) {
+        lastEndX = x + (it.width || 0);
+        cur.right = Math.max(cur.right, lastEndX);
+        cur.size = Math.max(cur.size, size);
+      }
+      if (it.hasEOL) pushLine();
+    }
+    pushLine();
+    if (!lines.length) return [];
+
+    const gaps = [];
+    for (let i = 1; i < lines.length; i++) {
+      const dy = lines[i - 1].y - lines[i].y;
+      if (dy > 0) gaps.push(dy);
+    }
+    gaps.sort((a, b) => a - b);
+    const typical = gaps.length ? gaps[Math.floor(gaps.length / 2)] : 14;
+    const maxRight = Math.max(...lines.map((l) => l.right));
+    const minLeft = Math.min(...lines.map((l) => l.left));
+    const width = Math.max(1, maxRight - minLeft);
+
+    const paras = [];
+    let para = lines[0].text;
+    for (let i = 1; i < lines.length; i++) {
+      const prev = lines[i - 1], line = lines[i];
+      const dy = prev.y - line.y;
+      const prevShort = prev.right < minLeft + width * 0.62;
+      const prevEnds = /[.!?:;"”)]$/.test(prev.text);
+      const newPara =
+        dy <= 0 || dy > typical * 1.45 ||
+        Math.abs(line.size - prev.size) > 1.5 ||
+        (prevShort) ||
+        (prevEnds && prev.right < minLeft + width * 0.85);
+      if (newPara) {
+        paras.push(para);
+        para = line.text;
+      } else if (/[A-Za-z]-$/.test(para) && /^[a-z]/.test(line.text)) {
+        para = para.slice(0, -1) + line.text; // re-join a word split by hyphenation
+      } else {
+        para += " " + line.text;
+      }
+    }
+    paras.push(para);
+    return paras.filter((p) => p.trim()).flatMap((p) => splitLong(p, 6000));
+  }
+
+  async function readFile(file, onProgress) {
+    const kind = kindOf(file);
+    if (!kind) throw new Error("This file type isn't supported. Use .txt, .md, .pdf or .docx.");
+    let pages;
+    if (kind === "pdf") pages = await readPdf(file, onProgress);
+    else if (kind === "docx") pages = await readDocx(file);
+    else pages = await readText(file);
+    return { kind, pages };
+  }
+
+  window.SpiderExtract = { readFile, kindOf, paginateText };
+})();
+
+</script>
+  <script>
+/* ---- js/spider.js ---- */
+/* ==========================================================================
+   Spell Spider — the spider itself
+   A colorful SVG spider with eight two-tone legs. Legs walk with an
+   alternating gait, and any leg can stretch out to grab a point on the page.
+   ========================================================================== */
+(function () {
+  "use strict";
+
+  const NS = "http://www.w3.org/2000/svg";
+  const DEG = Math.PI / 180;
+  let instance = 0;
+
+  // Right-side legs, front to back. The left side is a mirror image.
+  // attach: where the leg joins the body; base: resting angle (0 = pointing right, negative = forward)
+  // bend: how much the lower leg turns; femur/tibia: segment lengths; knee: which way the knee bows
+  const LEGS = [
+    { attach: [5.2, -9.5], base: -58, bend: -26, femur: 15, tibia: 19, knee: -1 },
+    { attach: [6.4, -6.5], base: -22, bend: -12, femur: 15, tibia: 17, knee: -1 },
+    { attach: [6.4, -3.5], base: 16, bend: 12, femur: 14, tibia: 17, knee: 1 },
+    { attach: [5.6, -0.5], base: 52, bend: 26, femur: 15, tibia: 19, knee: 1 },
+  ];
+
+  /* Color themes. body/thorax are gradient stops; legs are [upper, lower] colors per leg pair. */
+  const THEMES = {
+    rainbow: {
+      name: "Rainbow",
+      body: ["#ff4d6d", "#ff9f1c", "#ffd23f", "#2ec4b6", "#3a86ff", "#8338ec"],
+      thorax: ["#8338ec", "#c13dd6"],
+      legs: [["#ff4d6d", "#ff9f1c"], ["#ffd23f", "#2ec4b6"], ["#2ec4b6", "#3a86ff"], ["#8338ec", "#f15bb5"]],
+      palps: "#f15bb5", outline: "#2a1840", marks: "#ffffff",
+    },
+    peacock: {
+      name: "Peacock",
+      body: ["#023e8a", "#0096c7", "#48cae4", "#ffb703", "#fb8500", "#d62828"],
+      thorax: ["#1d3557", "#2a6f97"],
+      legs: [["#1d3557", "#48cae4"], ["#fb8500", "#ffb703"], ["#1d3557", "#48cae4"], ["#fb8500", "#ffb703"]],
+      palps: "#ffb703", outline: "#0b1a2e", marks: "#ffffff",
+    },
+    neon: {
+      name: "Neon",
+      body: ["#f72585", "#b5179e", "#7209b7", "#4361ee", "#4cc9f0", "#39ff14"],
+      thorax: ["#3a0ca3", "#4361ee"],
+      legs: [["#39ff14", "#4cc9f0"], ["#f72585", "#fee440"], ["#4cc9f0", "#39ff14"], ["#fee440", "#f72585"]],
+      palps: "#39ff14", outline: "#10002b", marks: "#fee440",
+    },
+    candy: {
+      name: "Candy",
+      body: ["#ff8fab", "#ffb3c6", "#cdb4db", "#a2d2ff", "#bde0fe"],
+      thorax: ["#ff8fab", "#cdb4db"],
+      legs: [["#ff8fab", "#a2d2ff"], ["#cdb4db", "#ffc8dd"], ["#a2d2ff", "#ff8fab"], ["#ffc8dd", "#cdb4db"]],
+      palps: "#ff8fab", outline: "#5a2a4a", marks: "#ffffff",
+    },
+    midnight: {
+      name: "Midnight",
+      body: ["#2b2140", "#3d2f5c"],
+      thorax: ["#463764", "#3a2d55"],
+      legs: [["#2a2040", "#3a2d55"], ["#2a2040", "#3a2d55"], ["#2a2040", "#3a2d55"], ["#2a2040", "#3a2d55"]],
+      palps: "#3a2d55", outline: "#120c1d", marks: "#8f7fb5",
+    },
+  };
+
+  function shade(hex, amount) {
+    const h = hex.replace("#", "");
+    const n = parseInt(h.length === 3 ? h.split("").map((c) => c + c).join("") : h, 16);
+    let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    const t = amount < 0 ? 0 : 255, p = Math.abs(amount);
+    r = Math.round((t - r) * p + r); g = Math.round((t - g) * p + g); b = Math.round((t - b) * p + b);
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+  }
+
+  /* Build a theme from a single color picked by the user. */
+  function themeFromColor(hex) {
+    return {
+      name: "Custom",
+      body: [shade(hex, -0.1), hex, shade(hex, 0.35)],
+      thorax: [shade(hex, 0.15), hex],
+      legs: [0, 1, 2, 3].map(() => [shade(hex, -0.15), shade(hex, 0.25)]),
+      palps: shade(hex, 0.3), outline: shade(hex, -0.65), marks: "#ffffff",
+    };
+  }
+
+  function el(name, attrs, parent) {
+    const node = document.createElementNS(NS, name);
+    for (const k in attrs) node.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(node);
+    return node;
+  }
+
+  /* Where the knee goes for a leg from (ax,ay) to foot (fx,fy).
+     Short reach: a real two-bone bend. Long reach: the leg stretches with a gentle arch. */
+  function kneeFor(ax, ay, fx, fy, a, b, sign) {
+    const dx = fx - ax, dy = fy - ay;
+    const d = Math.hypot(dx, dy) || 0.001;
+    const ux = dx / d, uy = dy / d;
+    const px = -uy * sign, py = ux * sign;
+    if (d < a + b - 0.5) {
+      const cos = Math.max(-1, Math.min(1, (a * a + d * d - b * b) / (2 * a * d)));
+      const ang = Math.acos(cos);
+      return [ax + ux * a * Math.cos(ang) + px * a * Math.sin(ang), ay + uy * a * Math.cos(ang) + py * a * Math.sin(ang)];
+    }
+    const bulge = Math.min(24, 5 + d * 0.06);
+    return [ax + dx * 0.45 + px * bulge, ay + dy * 0.45 + py * bulge];
+  }
+
+  class Spider {
+    constructor(options) {
+      options = options || {};
+      this.uid = "sp" + ++instance;
+      this.size = 1;
+      this.svg = el("svg", { viewBox: "-50 -50 100 100", class: "spider", "aria-hidden": "true" });
+      const defs = el("defs", {}, this.svg);
+      this.bodyGrad = el("linearGradient", { id: this.uid + "-body", x1: "0", y1: "0", x2: "1", y2: "1" }, defs);
+      this.thoraxGrad = el("linearGradient", { id: this.uid + "-thorax", x1: "0", y1: "0", x2: "0", y2: "1" }, defs);
+
+      this.root = el("g", {}, this.svg);
+      const legGroup = el("g", { "stroke-linecap": "round", "stroke-linejoin": "round", fill: "none" }, this.root);
+      this.legs = [];
+      for (let i = 0; i < 8; i++) {
+        const outline = el("path", { "stroke-width": 4.8 }, legGroup);
+        const upper = el("path", { "stroke-width": 3 }, legGroup);
+        const lower = el("path", { "stroke-width": 2.7 }, legGroup);
+        const tip = el("circle", { r: 1.7 }, legGroup);
+        this.legs.push({ outline, upper, lower, tip });
+      }
+      this.palps = [
+        el("path", { fill: "none", "stroke-linecap": "round", "stroke-width": 2.4 }, this.root),
+        el("path", { fill: "none", "stroke-linecap": "round", "stroke-width": 2.4 }, this.root),
+      ];
+      this.abdomen = el("ellipse", { cx: 0, cy: 12, rx: 11.5, ry: 14, fill: `url(#${this.uid}-body)`, "stroke-width": 1.4 }, this.root);
+      this.marking = el("path", {
+        d: "M-5.5 6.5 Q0 10.5 5.5 6.5 M-5 12.5 Q0 16.5 5 12.5 M-3.5 18.5 Q0 21.5 3.5 18.5",
+        fill: "none", "stroke-width": 1.7, "stroke-linecap": "round", opacity: 0.85,
+      }, this.root);
+      this.spots = el("g", {}, this.root);
+      for (const [x, y, r] of [[-6.5, 9.5, 1.3], [6.5, 9.5, 1.3], [-6, 16, 1.1], [6, 16, 1.1]]) {
+        el("circle", { cx: x, cy: y, r }, this.spots);
+      }
+      this.shine = el("ellipse", { cx: -4.5, cy: 4.5, rx: 3.2, ry: 5, fill: "#fff", opacity: 0.28 }, this.root);
+      this.thorax = el("ellipse", { cx: 0, cy: -6, rx: 9, ry: 8.5, fill: `url(#${this.uid}-thorax)`, "stroke-width": 1.4 }, this.root);
+      this.eyes = el("g", {}, this.root);
+      for (const sx of [-1, 1]) {
+        el("circle", { cx: sx * 6.6, cy: -9.4, r: 1.25, fill: "#fff", opacity: 0.9 }, this.eyes);
+        el("circle", { cx: sx * 3.4, cy: -11.2, r: 3.4, fill: "#fff", stroke: "#120c1d", "stroke-width": 0.6 }, this.eyes);
+        el("circle", { cx: sx * 3.4, cy: -11.7, r: 2.1, fill: "#120c1d" }, this.eyes);
+        el("circle", { cx: sx * 3.4 - 0.8, cy: -12.6, r: 0.75, fill: "#fff" }, this.eyes);
+      }
+
+      this.setTheme(options.theme || "rainbow", options.color);
+      this.setSize(options.size || 1);
+      this.pose(0, 0, 0, 0, null);
+    }
+
+    setTheme(name, customColor) {
+      const t = name === "custom" ? themeFromColor(customColor || "#7b2cbf") : (THEMES[name] || THEMES.rainbow);
+      const fillStops = (grad, colors) => {
+        grad.textContent = "";
+        colors.forEach((c, i) => el("stop", { offset: colors.length > 1 ? i / (colors.length - 1) : 0, "stop-color": c }, grad));
+      };
+      fillStops(this.bodyGrad, t.body);
+      fillStops(this.thoraxGrad, t.thorax);
+      this.legs.forEach((leg, n) => {
+        const pair = t.legs[n % 4];
+        leg.outline.setAttribute("stroke", t.outline);
+        leg.upper.setAttribute("stroke", pair[0]);
+        leg.lower.setAttribute("stroke", pair[1]);
+        leg.tip.setAttribute("fill", t.outline);
+      });
+      for (const p of this.palps) p.setAttribute("stroke", t.palps);
+      this.abdomen.setAttribute("stroke", t.outline);
+      this.thorax.setAttribute("stroke", t.outline);
+      this.marking.setAttribute("stroke", t.marks);
+      this.spots.setAttribute("fill", t.marks);
+    }
+
+    setSize(scale) {
+      this.size = scale;
+      const px = Math.round(100 * scale);
+      this.svg.setAttribute("width", px);
+      this.svg.setAttribute("height", px);
+    }
+
+    /* Place the spider. x,y are page pixels; angle in degrees (0 = facing up, 180 = facing down). */
+    place(x, y, angle) {
+      const half = 50 * this.size;
+      this.svg.style.transform = `translate(${x - half}px, ${y - half}px)`;
+      this.root.setAttribute("transform", `rotate(${angle})`);
+    }
+
+    /* phase: gait clock. busy (0..1): wiggles the feelers. idle: time for small idle motion.
+       stride (0..1): how much the legs swing. reach: optional array of 8 entries, each null or
+       { x, y, k } where x,y is a point in the spider's own coordinates and k (0..1) how far that leg reaches for it. */
+    pose(phase, busy, idle, stride, reach) {
+      stride = stride === undefined ? 1 : stride;
+      for (let side = 0; side < 2; side++) {
+        const mirror = side === 0 ? 1 : -1;
+        for (let i = 0; i < 4; i++) {
+          const L = LEGS[i];
+          const n = side * 4 + i;
+          const group = (i + side) % 2; // alternating tetrapod gait
+          const p = phase + (group ? Math.PI : 0);
+          const swing = Math.sin(p) * 13 * stride + Math.sin(idle * 1.7 + i + side * 2) * 1.6;
+          const lift = Math.max(0, Math.cos(p)) * stride;
+          const reachLen = 1 - lift * 0.14;
+          const a1 = (L.base + swing) * DEG;
+          const a2 = (L.base + swing + L.bend) * DEG;
+          const ax = L.attach[0], ay = L.attach[1];
+          let kx = ax + Math.cos(a1) * L.femur, ky = ay + Math.sin(a1) * L.femur;
+          let fx = kx + Math.cos(a2) * L.tibia * reachLen, fy = ky + Math.sin(a2) * L.tibia * reachLen;
+
+          const r = reach && reach[n];
+          if (r && r.k > 0) {
+            // Target in this side's un-mirrored frame
+            const tx = r.x * mirror, ty = r.y;
+            const gx = fx + (tx - fx) * r.k, gy = fy + (ty - fy) * r.k;
+            const [ikx, iky] = kneeFor(ax, ay, gx, gy, L.femur, L.tibia, L.knee);
+            kx += (ikx - kx) * Math.min(1, r.k * 1.4);
+            ky += (iky - ky) * Math.min(1, r.k * 1.4);
+            fx = gx; fy = gy;
+          }
+
+          const A = `${(ax * mirror).toFixed(2)} ${ay.toFixed(2)}`;
+          const K = `${(kx * mirror).toFixed(2)} ${ky.toFixed(2)}`;
+          const F = `${(fx * mirror).toFixed(2)} ${fy.toFixed(2)}`;
+          const leg = this.legs[n];
+          leg.outline.setAttribute("d", `M${A} L${K} L${F}`);
+          leg.upper.setAttribute("d", `M${A} L${K}`);
+          leg.lower.setAttribute("d", `M${K} L${F}`);
+          leg.tip.setAttribute("cx", (fx * mirror).toFixed(2));
+          leg.tip.setAttribute("cy", fy.toFixed(2));
+        }
+        const palpSwing = Math.sin(idle * (3 + busy * 9) + side) * (6 + busy * 6);
+        const pa = (-75 + palpSwing) * DEG;
+        const px1 = 2.4, py1 = -13.4;
+        const px2 = px1 + Math.cos(pa) * 5.5, py2 = py1 + Math.sin(pa) * 5.5;
+        this.palps[side].setAttribute("d", `M${(px1 * mirror).toFixed(2)} ${py1} L${(px2 * mirror).toFixed(2)} ${py2.toFixed(2)}`);
+      }
+      const breathe = 1 + Math.sin(idle * 2.2) * 0.018;
+      this.abdomen.setAttribute("ry", (14 * breathe).toFixed(2));
+    }
+  }
+
+  Spider.THEMES = THEMES;
+  window.Spider = Spider;
+})();
+
+</script>
+  <script>
+/* ---- js/app.js ---- */
+/* ==========================================================================
+   Spell Spider — app
+   Loads documents, sends them to a checker, renders pages, and runs the
+   walker: the spider climbs straight down each page and stretches its legs
+   out to grab (outline) every mistake on each line it passes.
+   ========================================================================== */
+(function () {
+  "use strict";
+
+  const $ = (sel) => document.querySelector(sel);
+  const C = window.SpiderCheck;
+  const X = window.SpiderExtract;
+  const DEG = Math.PI / 180;
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------------- Settings ---------------- */
+  const SPEEDS = [
+    { px: 18, name: "Crawl" }, { px: 30, name: "Creep" }, { px: 48, name: "Amble" },
+    { px: 72, name: "Stroll" }, { px: 105, name: "Walk" }, { px: 150, name: "Trot" },
+    { px: 220, name: "Scurry" }, { px: 330, name: "Dash" }, { px: 520, name: "Sprint" },
+    { px: 850, name: "Zoom" },
+  ];
+  const THEME_ORDER = ["rainbow", "peacock", "neon", "candy", "midnight"];
+  const CATS = ["spelling", "grammar", "style"];
+  const CAT_LABEL = { spelling: "Spelling", grammar: "Grammar", style: "Style" };
+
+  const STORE_KEY = "spell-spider-settings-v1";
+  const DEFAULTS = {
+    speed: 4, pause: 0.6, size: 1.3, theme: "rainbow", color: "#7b2cbf",
+    follow: true, silk: true, sound: false,
+    engine: "languagetool", language: "en-US", ignore: "",
+    show: { spelling: true, grammar: true, style: true },
+  };
+
+  function loadSettings() {
+    const base = JSON.parse(JSON.stringify(DEFAULTS));
+    try {
+      const raw = localStorage.getItem(STORE_KEY);
+      if (raw) {
+        const s = JSON.parse(raw);
+        return Object.assign(base, s, { show: Object.assign(base.show, s.show || {}) });
+      }
+    } catch (e) { /* storage blocked: use defaults */ }
+    return base;
+  }
+  function saveSettings() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(settings)); } catch (e) { /* ignore */ }
+  }
+  const settings = loadSettings();
+
+  /* ---------------- Elements ---------------- */
+  const els = {
+    run: $("#btnRun"), skip: $("#btnSkip"), all: $("#btnAll"),
+    speed: $("#speed"), speedOut: $("#speedOut"), status: $("#status"),
+    fileInput: $("#fileInput"), docList: $("#docList"), sample: $("#btnSample"), emptySample: $("#emptySample"),
+    pause: $("#pause"), pauseOut: $("#pauseOut"), size: $("#size"), sizeOut: $("#sizeOut"),
+    colors: $("#colors"), themeName: $("#themeName"), follow: $("#follow"), silkToggle: $("#silkToggle"), sound: $("#sound"),
+    language: $("#language"), langRow: $("#langRow"), ignore: $("#ignore"),
+    recheck: $("#btnRecheck"), engineNote: $("#engineNote"),
+    viewer: $("#viewer"), pages: $("#pages"), empty: $("#empty"), emptyArt: $("#emptyArt"),
+    silk: $("#silk"), bubble: $("#bubble"), dropOverlay: $("#dropOverlay"), toast: $("#toast"),
+    caughtCount: $("#caughtCount"), caughtList: $("#caughtList"), caughtEmpty: $("#caughtEmpty"),
+    caughtScroll: $("#caughtScroll"), report: $("#btnReport"),
+    n: { spelling: $("#nSpelling"), grammar: $("#nGrammar"), style: $("#nStyle") },
+  };
+
+  /* ---------------- State ---------------- */
+  const docs = [];
+  const errorsById = new Map();
+  const counts = { spelling: 0, grammar: 0, style: 0 };
+  let nextDocId = 1;
+  let nextErrId = 1;
+  let ignoreSet = new Set();
+  let ltWaiting = false;
+  let fallbackNoticeShown = false;
+  let userScrollUntil = 0;
+
+  if (!THEME_ORDER.includes(settings.theme) && settings.theme !== "custom") settings.theme = "rainbow";
+
+  const spider = new window.Spider({ theme: settings.theme, color: settings.color, size: settings.size });
+  els.pages.appendChild(spider.svg);
+  spider.svg.style.display = "none";
+
+  const emptySpider = new window.Spider({ theme: settings.theme, color: settings.color, size: 1.9 });
+  els.emptyArt.appendChild(emptySpider.svg);
+
+  // The walker: everything about where the spider is and what it's doing.
+  // x/y are measured from the top-left of the current page (W.page), so the
+  // spider stays put when documents above it are added or removed.
+  // Each of the 8 legs can reach for a point: k = how far it's reaching (0..1),
+  // tk = where k is heading, (px,py) = the point it's holding, (tx,ty) = where it's going.
+  const W = {
+    running: false, paused: false, mode: "idle",
+    page: null, x: 0, y: -4, angle: 180, targetAngle: 180,
+    phase: 0, idle: 0, busy: 0, stride: 0, moving: false,
+    lines: [], lineErrs: [], lineIdx: 0, col: 0, target: null,
+    legs: Array.from({ length: 8 }, () => ({ k: 0, tk: 0, px: 0, py: 0, tx: 0, ty: 0 })),
+    wave: [], reachQueue: [], reachHold: -1,
+    catchTimer: 0, spin: 0, layoutWidth: 0, pageH: 0, bubbleUntil: 0, bubbleText: "",
+  };
+
+  /* ==========================================================================
+     Documents
+     ========================================================================== */
+  function createDoc(name, kind) {
+    const doc = {
+      id: nextDocId++, name, kind, pages: [], gen: 0,
+      removed: false, failed: false, loaded: false, checking: false, groupEl: null,
+    };
+    const section = document.createElement("section");
+    section.className = "doc";
+    section.innerHTML = '<header class="doc-head"><h2 class="doc-title"></h2><p class="doc-meta"></p></header><div class="doc-pages"></div>';
+    section.querySelector(".doc-title").textContent = name;
+    doc.el = section;
+    doc.metaEl = section.querySelector(".doc-meta");
+    doc.pagesEl = section.querySelector(".doc-pages");
+    els.pages.insertBefore(section, els.silk);
+
+    const li = document.createElement("li");
+    li.className = "doc-item";
+    li.innerHTML = '<span class="doc-ext" aria-hidden="true"></span><span class="doc-info"><span class="doc-name"></span><span class="doc-state"></span></span><button class="icon-btn" type="button">×</button>';
+    li.querySelector(".doc-ext").textContent = kind === "pdf" ? ".pdf" : kind === "docx" ? ".docx" : ".txt";
+    li.querySelector(".doc-name").textContent = name;
+    li.querySelector(".doc-name").title = name;
+    const removeBtn = li.querySelector("button");
+    removeBtn.setAttribute("aria-label", "Remove " + name);
+    removeBtn.addEventListener("click", () => removeDoc(doc));
+    doc.listEl = li;
+    doc.stateEl = li.querySelector(".doc-state");
+    els.docList.appendChild(li);
+
+    docs.push(doc);
+    els.empty.hidden = true;
+    setDocState(doc, "Reading…");
+    return doc;
+  }
+
+  function setDocState(doc, text, bad) {
+    doc.stateEl.textContent = text;
+    doc.stateEl.classList.toggle("is-bad", !!bad);
+  }
+
+  function updateDocState(doc) {
+    if (doc.failed || !doc.loaded) return;
+    const n = doc.pages.length;
+    const ready = doc.pages.filter((p) => p.ready).length;
+    const walked = doc.pages.filter((p) => p.walked).length;
+    const caught = doc.pages.reduce((a, p) => a + p.errors.filter((e) => e.caught).length, 0);
+    const word = caught === 1 ? "mistake" : "mistakes";
+    if (walked === n) setDocState(doc, `Done, ${caught} ${word} caught`);
+    else if (ready < n) setDocState(doc, `Checking… ${ready} of ${n} ${n === 1 ? "page" : "pages"} ready`);
+    else if (walked > 0) setDocState(doc, `Walked ${walked} of ${n} pages, ${caught} caught`);
+    else setDocState(doc, `${n} ${n === 1 ? "page" : "pages"}, ready to walk`);
+    doc.metaEl.textContent = `${n} ${n === 1 ? "page" : "pages"}`;
+  }
+
+  function buildPages(doc, pagesData) {
+    doc.pages = pagesData.map((pd, i) => {
+      const paragraphs = pd.paragraphs;
+      const starts = [];
+      let pos = 0;
+      for (const p of paragraphs) { starts.push(pos); pos += p.length + 2; }
+      const page = {
+        doc, index: i, paragraphs, starts, text: paragraphs.join("\n\n"),
+        errors: [], pending: [], piecesLeft: 0,
+        ready: false, walked: false, autoCatch: false,
+      };
+      const art = document.createElement("article");
+      art.className = "page is-checking";
+      art.setAttribute("aria-label", `${doc.name}, page ${i + 1}`);
+      art.innerHTML = '<div class="page-body"></div><footer class="page-foot"></footer>';
+      page.el = art;
+      page.bodyEl = art.querySelector(".page-body");
+      art.querySelector(".page-foot").textContent = `Page ${i + 1} of ${pagesData.length}`;
+      doc.pagesEl.appendChild(art);
+      renderPage(page);
+      return page;
+    });
+    doc.loaded = true;
+    updateDocState(doc);
+  }
+
+  /* Draw a page's text, wrapping each found mistake in an (invisible) <mark>. */
+  function renderPage(page) {
+    const body = page.bodyEl;
+    body.textContent = "";
+    if (!page.paragraphs.length) {
+      const p = document.createElement("p");
+      p.className = "no-text";
+      p.textContent = "No text found on this page. It may be a scanned image, which the spider can't read.";
+      body.appendChild(p);
+      return;
+    }
+    const errs = page.errors.slice().sort((a, b) => a.offset - b.offset);
+    let ei = 0;
+    page.paragraphs.forEach((para, i) => {
+      const p = document.createElement("p");
+      p.className = "para";
+      const start = page.starts[i];
+      const end = start + para.length;
+      let pos = 0;
+      while (ei < errs.length && errs[ei].offset < end) {
+        const e = errs[ei++];
+        const s = e.offset - start;
+        if (s < pos) continue;
+        const len = Math.min(e.length, para.length - s);
+        if (s > pos) p.appendChild(document.createTextNode(para.slice(pos, s)));
+        const m = document.createElement("mark");
+        m.className = "err cat-" + e.category;
+        m.dataset.id = e.id;
+        m.textContent = para.slice(s, s + len);
+        if (e.caught) { m.classList.add("caught"); m.title = tooltipFor(e); }
+        e.el = m;
+        p.appendChild(m);
+        pos = s + len;
+      }
+      if (pos < para.length) p.appendChild(document.createTextNode(para.slice(pos)));
+      body.appendChild(p);
+    });
+  }
+
+  async function addFiles(files) {
+    const jobs = [];
+    for (const file of files) {
+      const kind = X.kindOf(file);
+      if (!kind) {
+        notice(`“${file.name}” can't be read. Use .txt, .md, .pdf or .docx files.`);
+        continue;
+      }
+      jobs.push({ file, doc: createDoc(file.name, kind) });
+    }
+    refreshUI();
+    for (const { file, doc } of jobs) {
+      try {
+        const res = await X.readFile(file, (p, n) => setDocState(doc, `Reading page ${p} of ${n}…`));
+        if (doc.removed) continue;
+        buildPages(doc, res.pages);
+        if (!res.pages.some((p) => p.paragraphs.length)) {
+          notice(`No text found in “${doc.name}”. Scanned PDFs are images, and the spider can only read text.`);
+        }
+        queueCheck(doc);
+      } catch (err) {
+        if (doc.removed) continue;
+        doc.failed = true;
+        setDocState(doc, "Couldn't read this file", true);
+        const box = document.createElement("p");
+        box.className = "doc-failed";
+        box.textContent = `This file couldn't be opened${err && err.message ? ": " + err.message : "."} If it's a PDF, check that it isn't password-protected.`;
+        doc.pagesEl.appendChild(box);
+      }
+      placeIdleSpider();
+      refreshUI();
+    }
+  }
+
+  function removeDoc(doc) {
+    if (doc.removed) return;
+    if (W.page && W.page.doc === doc) {
+      releaseLegs();
+      toPagesFrame();
+      if (W.running && !["spin", "done", "idle"].includes(W.mode)) W.mode = "next-page";
+    }
+    doc.removed = true;
+    for (const page of doc.pages) {
+      for (const err of page.errors) {
+        if (err.caught) counts[err.category]--;
+        errorsById.delete(err.id);
+      }
+    }
+    if (doc.groupEl) doc.groupEl.remove();
+    doc.el.remove();
+    doc.listEl.remove();
+    docs.splice(docs.indexOf(doc), 1);
+    const qi = checkQueue.indexOf(doc);
+    if (qi >= 0) checkQueue.splice(qi, 1);
+    if (!docs.length) {
+      W.running = false; W.paused = false; W.mode = "idle"; W.page = null;
+      els.empty.hidden = false;
+    }
+    placeIdleSpider();
+    renderCounts();
+    refreshUI();
+  }
+
+  /* ==========================================================================
+     Checking
+     ========================================================================== */
+  const checkQueue = [];
+  let checkBusy = false;
+
+  function queueCheck(doc) {
+    if (!checkQueue.includes(doc)) checkQueue.push(doc);
+    pumpChecks();
+  }
+
+  async function pumpChecks() {
+    if (checkBusy) return;
+    checkBusy = true;
+    try {
+      while (checkQueue.length) {
+        const doc = checkQueue.shift();
+        if (!doc.removed && doc.loaded) await checkDoc(doc);
+      }
+    } finally {
+      checkBusy = false;
+    }
+  }
+
+  function splitPage(page, max, sizeOf) {
+    if (sizeOf(page.text) <= max) return [{ page, start: 0, text: page.text }];
+    const pieces = [];
+    let cur = null;
+    page.paragraphs.forEach((para, i) => {
+      const start = page.starts[i];
+      if (cur && sizeOf(cur.text) + 2 + sizeOf(para) > max) { pieces.push(cur); cur = null; }
+      if (!cur) cur = { page, start, text: para };
+      else cur.text = page.text.slice(cur.start, start + para.length);
+    });
+    if (cur) pieces.push(cur);
+    return pieces;
+  }
+
+  async function checkDoc(doc) {
+    const gen = doc.gen;
+    const online = settings.engine === "languagetool";
+    let engine = online ? C.LanguageTool : C.Builtin;
+    const encoder = new TextEncoder();
+    const sizeOf = online ? (t) => encoder.encode(t).length : (t) => t.length;
+    const max = online ? C.LanguageTool.maxRequestBytes : 5000;
+    doc.checking = true;
+
+    if (!online && !C.Builtin.typo && !C.Builtin.dictionaryFailed) {
+      setDocState(doc, "Loading the dictionary…");
+      await C.Builtin.load();
+      if (C.Builtin.dictionaryFailed) {
+        notice("The spelling dictionary couldn't load, so only the grammar rules are running. Check your internet connection.");
+      }
+    }
+    if (doc.removed || doc.gen !== gen) return;
+
+    const pieces = [];
+    for (const page of doc.pages) {
+      page.pending = [];
+      if (!page.text.trim()) { page.piecesLeft = 0; finalizePage(page); continue; }
+      const ps = splitPage(page, max, sizeOf);
+      page.piecesLeft = ps.length;
+      pieces.push(...ps);
+    }
+
+    // Group pieces into requests. The first one is small so the spider can start sooner.
+    const batches = [];
+    let cur = null;
+    let limit = online ? Math.min(max, 3000) : max;
+    for (const pc of pieces) {
+      if (cur && sizeOf(cur.text) + 2 + sizeOf(pc.text) > limit) { batches.push(cur); cur = null; limit = max; }
+      if (!cur) cur = { text: "", parts: [] };
+      if (cur.text) cur.text += "\n\n";
+      cur.parts.push({ piece: pc, at: cur.text.length });
+      cur.text += pc.text;
+    }
+    if (cur) batches.push(cur);
+
+    updateDocState(doc);
+    for (const batch of batches) {
+      if (doc.removed || doc.gen !== gen) return;
+      let matches;
+      try {
+        matches = await engine.check(batch.text, { language: settings.language });
+      } catch (err) {
+        if (engine === C.LanguageTool) {
+          if (!fallbackNoticeShown) {
+            notice(`${err.message} Using the private built-in checker instead for now.`);
+            fallbackNoticeShown = true;
+          }
+          engine = C.Builtin;
+          matches = await C.Builtin.check(batch.text);
+        } else {
+          matches = [];
+        }
+      }
+      if (doc.removed || doc.gen !== gen) return;
+      for (const part of batch.parts) {
+        const pc = part.piece;
+        const end = part.at + pc.text.length;
+        for (const m of matches) {
+          if (m.offset >= part.at && m.offset + m.length <= end) {
+            pc.page.pending.push(Object.assign({}, m, { offset: m.offset - part.at + pc.start }));
+          }
+        }
+        pc.page.piecesLeft--;
+        if (pc.page.piecesLeft === 0) finalizePage(pc.page);
+      }
+      updateDocState(doc);
+      if (engine === C.Builtin) await sleep(0);
+    }
+    doc.checking = false;
+    updateDocState(doc);
+    refreshUI();
+  }
+
+  function finalizePage(page) {
+    const errs = [];
+    for (const m of C.dedupe(page.pending)) {
+      const i = paragraphIndexAt(page, m.offset);
+      if (i < 0) continue;
+      const paraEnd = page.starts[i] + page.paragraphs[i].length;
+      const length = Math.min(m.length, paraEnd - m.offset);
+      if (length <= 0) continue;
+      const err = {
+        id: nextErrId++, page, doc: page.doc,
+        offset: m.offset, length,
+        text: page.text.substr(m.offset, length),
+        message: m.message, replacements: (m.replacements || []).filter(Boolean),
+        category: CATS.includes(m.category) ? m.category : "grammar",
+        ruleId: m.ruleId || "", caught: false, el: null, item: null,
+      };
+      errorsById.set(err.id, err);
+      errs.push(err);
+    }
+    page.pending = [];
+    page.errors = errs;
+    renderPage(page);
+    page.ready = true;
+    page.el.classList.remove("is-checking");
+    if (page.autoCatch) sweepPage(page, false);
+    updateDocState(page.doc);
+    refreshUI();
+  }
+
+  function paragraphIndexAt(page, offset) {
+    for (let i = 0; i < page.paragraphs.length; i++) {
+      const s = page.starts[i];
+      if (offset >= s && offset < s + page.paragraphs[i].length) return i;
+    }
+    return -1;
+  }
+
+  function recheckAll() {
+    releaseLegs();
+    resetCatches();
+    for (const doc of docs) {
+      if (!doc.loaded) continue;
+      doc.gen++;
+      for (const page of doc.pages) {
+        for (const e of page.errors) errorsById.delete(e.id);
+        page.errors = [];
+        page.pending = [];
+        page.ready = false;
+        page.walked = false;
+        page.autoCatch = false;
+        page.el.classList.add("is-checking");
+        renderPage(page);
+      }
+      queueCheck(doc);
+    }
+    if (W.running) W.mode = "next-page";
+    else { W.mode = "idle"; placeIdleSpider(true); }
+    els.engineNote.hidden = true;
+    refreshUI();
+  }
+
+  /* ==========================================================================
+     Catching
+     ========================================================================== */
+  function isIgnored(err) {
+    if (err.category !== "spelling" || !ignoreSet.size) return false;
+    return ignoreSet.has(err.text.trim().toLowerCase().replace(/’/g, "'"));
+  }
+  function catchable(err) {
+    return settings.show[err.category] && !isIgnored(err);
+  }
+
+  function tooltipFor(err) {
+    let t = err.message;
+    if (err.replacements.length) t += "\nSuggestion: " + err.replacements.slice(0, 3).join(", ");
+    return t;
+  }
+
+  function catchError(err, animate, quiet) {
+    if (err.caught) return;
+    err.caught = true;
+    if (err.el) {
+      err.el.classList.add("caught");
+      err.el.title = tooltipFor(err);
+      if (animate && !reducedMotion) {
+        err.el.classList.remove("lasso");
+        void err.el.offsetWidth; // restart the animation
+        err.el.classList.add("lasso");
+      }
+    }
+    counts[err.category]++;
+    addToList(err, animate);
+    renderCounts();
+    if (animate && !quiet) playCatchSound(err.category);
+  }
+
+  function uncatch(err) {
+    if (!err.caught) return;
+    err.caught = false;
+    counts[err.category]--;
+    if (err.el) {
+      err.el.classList.remove("caught", "lasso", "flash");
+      err.el.removeAttribute("title");
+    }
+    if (err.item) {
+      const group = err.item.closest(".ci-group");
+      err.item.remove();
+      err.item = null;
+      if (group && !group.querySelector(".ci")) { group.remove(); err.doc.groupEl = null; }
+    }
+    renderCounts();
+  }
+
+  function resetCatches() {
+    for (const err of errorsById.values()) {
+      err.caught = false;
+      err.item = null;
+      if (err.el) { err.el.classList.remove("caught", "lasso", "flash"); err.el.removeAttribute("title"); }
+    }
+    for (const doc of docs) {
+      doc.groupEl = null;
+      for (const page of doc.pages) page.walked = false;
+      updateDocState(doc);
+    }
+    els.caughtList.textContent = "";
+    for (const c of CATS) counts[c] = 0;
+    renderCounts();
+  }
+
+  /* Catch everything left on a page that the spider is allowed to catch. */
+  function sweepPage(page, animate) {
+    for (const err of page.errors) if (!err.caught && catchable(err)) catchError(err, animate, true);
+    page.walked = true;
+    updateDocState(page.doc);
+  }
+
+  /* After the ignore list or the kinds filter changes, bring catches in line. */
+  function syncCatches() {
+    for (const err of errorsById.values()) {
+      if (err.caught && isIgnored(err)) uncatch(err);
+      else if (!err.caught && err.page.walked && catchable(err)) catchError(err, false, true);
+    }
+    for (const doc of docs) updateDocState(doc);
+    refreshUI();
+  }
+
+  function renderCounts() {
+    let total = 0;
+    for (const c of CATS) {
+      els.n[c].textContent = counts[c];
+      if (settings.show[c]) total += counts[c];
+    }
+    els.caughtCount.textContent = total;
+    els.caughtEmpty.hidden = errorsById.size > 0 && els.caughtList.children.length > 0;
+    els.report.disabled = total === 0;
+  }
+
+  function visibleText(err) {
+    const t = err.text;
+    if (!t.trim()) return "extra space";
+    return /\s/.test(t) && err.category === "style" ? t.replace(/ /g, "␣") : t;
+  }
+
+  function addToList(err, animate) {
+    const doc = err.doc;
+    if (!doc.groupEl || !doc.groupEl.isConnected) {
+      const g = document.createElement("li");
+      g.className = "ci-group";
+      g.dataset.doc = doc.id;
+      g.innerHTML = '<h3 class="ci-doc"></h3><ol class="ci-items"></ol>';
+      g.querySelector(".ci-doc").textContent = doc.name;
+      const order = docs.indexOf(doc);
+      const after = Array.from(els.caughtList.children).find((el) => {
+        const d = docs.find((x) => String(x.id) === el.dataset.doc);
+        return d && docs.indexOf(d) > order;
+      });
+      els.caughtList.insertBefore(g, after || null);
+      doc.groupEl = g;
+    }
+    const li = document.createElement("li");
+    li.className = "ci cat-" + err.category;
+    li.dataset.id = err.id;
+    const key = err.page.index * 1e7 + err.offset;
+    li.dataset.key = key;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "ci-btn";
+    btn.innerHTML = '<span class="ci-top"><span class="ci-word"></span><span class="ci-where"></span></span><span class="ci-msg"></span>';
+    btn.querySelector(".ci-word").textContent = visibleText(err);
+    btn.querySelector(".ci-where").textContent = `${CAT_LABEL[err.category]}, page ${err.page.index + 1}`;
+    btn.querySelector(".ci-msg").textContent = err.message;
+    if (err.replacements.length) {
+      const fix = document.createElement("span");
+      fix.className = "ci-fix";
+      const r = err.replacements.slice(0, 3).map((s) => (s.trim() ? `“${s}”` : "removing it"));
+      fix.textContent = "Try " + (r.length > 1 ? r.slice(0, -1).join(", ") + " or " + r[r.length - 1] : r[0]);
+      btn.appendChild(fix);
+    }
+    btn.addEventListener("click", () => focusError(err));
+    li.appendChild(btn);
+
+    const items = doc.groupEl.querySelector(".ci-items");
+    const before = Array.from(items.children).find((el) => +el.dataset.key > key);
+    items.insertBefore(li, before || null);
+    err.item = li;
+
+    if (animate) {
+      li.classList.add("is-new");
+      setTimeout(() => li.classList.remove("is-new"), 700);
+      revealInList(li, false);
+    }
+  }
+
+  /* Scroll the mistakes list (only the list, never the whole page) so an item is visible. */
+  function revealInList(li, center) {
+    const sc = els.caughtScroll;
+    const lr = li.getBoundingClientRect();
+    const sr = sc.getBoundingClientRect();
+    let delta = 0;
+    if (center) delta = lr.top - sr.top - sr.height / 3;
+    else if (lr.bottom > sr.bottom) delta = lr.bottom - sr.bottom + 16;
+    else if (lr.top < sr.top + 40) delta = lr.top - sr.top - 40;
+    if (delta) sc.scrollTo({ top: sc.scrollTop + delta, behavior: center && !reducedMotion ? "smooth" : "auto" });
+  }
+
+  function focusError(err) {
+    if (!err.el) return;
+    const v = els.viewer;
+    const r = err.el.getBoundingClientRect();
+    const vr = v.getBoundingClientRect();
+    const top = v.scrollTop + (r.top - vr.top) - v.clientHeight * 0.4;
+    v.scrollTo({ top, behavior: reducedMotion ? "auto" : "smooth" });
+    userScrollUntil = performance.now() + 6000;
+    err.el.classList.remove("lasso", "flash");
+    void err.el.offsetWidth;
+    if (!reducedMotion) err.el.classList.add("flash");
+    setActiveItem(err);
+  }
+
+  function setActiveItem(err) {
+    els.caughtList.querySelectorAll(".ci.is-active").forEach((el) => el.classList.remove("is-active"));
+    if (err.item) err.item.classList.add("is-active");
+  }
+
+  /* ==========================================================================
+     The walker
+     The spider climbs straight down the middle of each page on its silk.
+     At every line with mistakes it stops and stretches its legs out to grab
+     them, up to four legs on each side at once. Extra mistakes on the same
+     line get grabbed in another wave right after.
+     ========================================================================== */
+  const WALKING_MODES = ["travel", "descend", "reach"];
+
+  function frameOffset(page) {
+    if (page && page.el && page.el.isConnected) return { x: page.el.offsetLeft, y: page.el.offsetTop };
+    return { x: 0, y: 0 };
+  }
+  /* Switch the spider's coordinates to another page without moving it on screen. */
+  function setFrame(page) {
+    const a = frameOffset(W.page);
+    const b = frameOffset(page);
+    const dx = a.x - b.x, dy = a.y - b.y;
+    W.x += dx;
+    W.y += dy;
+    for (const L of W.legs) { L.px += dx; L.py += dy; L.tx += dx; L.ty += dy; }
+    W.target = null;
+    W.page = page;
+  }
+  function toPagesFrame() { setFrame(null); }
+
+  function firstPage() {
+    for (const doc of docs) if (doc.loaded && doc.pages.length) return doc.pages[0];
+    return null;
+  }
+  function pageCenter(page) { return page.el.clientWidth / 2; }
+
+  /* When nothing is happening, park the spider on the top edge of the first page. */
+  function placeIdleSpider(force) {
+    if (W.running || W.mode === "spin") return; // never yank a spider that's busy
+    const page = firstPage();
+    if (!page) { W.page = null; return; }
+    if (force || !W.page || !W.page.el.isConnected || W.mode === "idle") {
+      releaseLegs();
+      W.page = page; W.x = pageCenter(page); W.y = -4; W.angle = W.targetAngle = 180;
+      W.mode = "idle";
+    }
+  }
+
+  function hasUnwalked() {
+    return docs.some((d) => !d.removed && !d.failed && (!d.loaded || d.pages.some((p) => !p.walked)));
+  }
+  function anyLoaded() { return docs.some((d) => d.loaded && d.pages.length); }
+
+  function findNextPage() {
+    for (const doc of docs) {
+      if (doc.removed || doc.failed) continue;
+      if (!doc.loaded) return { loading: true };
+      for (const page of doc.pages) if (!page.walked) return { page };
+    }
+    return {};
+  }
+
+  /* Measure every line of text on a page (positions relative to the page). */
+  function computeLines(page) {
+    const base = page.el.getBoundingClientRect();
+    const lines = [];
+    page.bodyEl.querySelectorAll("p.para").forEach((p) => {
+      const range = document.createRange();
+      range.selectNodeContents(p);
+      const groups = [];
+      for (const r of range.getClientRects()) {
+        if (r.width < 1 || r.height < 1) continue;
+        const cy = (r.top + r.bottom) / 2;
+        const g = groups.find((g) => cy >= g.top - 1 && cy <= g.bottom + 1);
+        if (g) {
+          g.left = Math.min(g.left, r.left); g.right = Math.max(g.right, r.right);
+          g.top = Math.min(g.top, r.top); g.bottom = Math.max(g.bottom, r.bottom);
+        } else {
+          groups.push({ left: r.left, right: r.right, top: r.top, bottom: r.bottom });
+        }
+      }
+      groups.sort((a, b) => a.top - b.top);
+      for (const g of groups) {
+        lines.push({
+          left: g.left - base.left, right: g.right - base.left,
+          top: g.top - base.top, bottom: g.bottom - base.top,
+          cy: (g.top + g.bottom) / 2 - base.top,
+        });
+      }
+    });
+    return lines;
+  }
+
+  /* For every line, list its mistakes and the spot a leg will grab (the middle of the mistake). */
+  function assignErrors(page, lines) {
+    const base = page.el.getBoundingClientRect();
+    const perLine = lines.map(() => []);
+    for (const err of page.errors) {
+      if (!err.el) continue;
+      const rects = Array.from(err.el.getClientRects()).filter((r) => r.height > 0);
+      if (!rects.length) continue; // caught by the sweep at the end of the page
+      const r = rects[0];
+      const cy = (r.top + r.bottom) / 2 - base.top;
+      const li = lines.findIndex((l) => cy >= l.top - 2 && cy <= l.bottom + 2);
+      if (li < 0) continue;
+      perLine[li].push({ err, x: (r.left + r.right) / 2 - base.left, y: cy });
+    }
+    perLine.forEach((arr) => arr.sort((a, b) => a.x - b.x));
+    return perLine;
+  }
+
+  function measurePage() {
+    W.lines = computeLines(W.page);
+    W.lineErrs = assignErrors(W.page, W.lines);
+    if (W.lines.length) {
+      const left = Math.min(...W.lines.map((l) => l.left));
+      const right = Math.max(...W.lines.map((l) => l.right));
+      W.col = (left + right) / 2;
+    } else {
+      W.col = pageCenter(W.page);
+    }
+    W.layoutWidth = els.pages.clientWidth;
+    W.pageH = W.page.el.offsetHeight;
+  }
+
+  function startPoint() {
+    return { x: W.col, y: Math.max(-4, W.lines[0].top - 30 * settings.size) };
+  }
+  function bottomY() {
+    return W.lines[W.lines.length - 1].bottom + 20 * settings.size;
+  }
+
+  function startPage(page) {
+    setFrame(page);
+    measurePage();
+    W.lineIdx = 0;
+    if (!W.lines.length) { endPage(); return; }
+    W.target = startPoint();
+    W.mode = "travel";
+    refreshUI();
+  }
+
+  function releaseLegs() {
+    for (const L of W.legs) L.tk = 0;
+    W.wave = [];
+    W.reachQueue = [];
+    W.reachHold = -1;
+  }
+
+  function endPage() {
+    releaseLegs();
+    const page = W.page;
+    if (page && !page.doc.removed) sweepPage(page, true);
+    W.mode = "next-page";
+    refreshUI();
+  }
+
+  function finishWalk() {
+    releaseLegs();
+    W.running = false;
+    W.paused = false;
+    W.mode = "spin";
+    W.spin = 1.1;
+    showBubble("All done!", 3500);
+    refreshUI();
+  }
+
+  /* Measure again after the layout changes, then carry on from the first line below the spider. */
+  function relayout(force) {
+    if (!W.page || !WALKING_MODES.includes(W.mode)) return;
+    if (!force && els.pages.clientWidth === W.layoutWidth && W.page.el.offsetHeight === W.pageH) return;
+    measurePage();
+    if (!W.lines.length) { endPage(); return; }
+    releaseLegs();
+    if (W.mode === "travel") { W.target = startPoint(); return; }
+    const idx = W.lines.findIndex((l) => l.cy > W.y + 0.5);
+    W.lineIdx = idx < 0 ? W.lines.length : idx;
+    W.mode = "descend";
+  }
+
+  function moveToward(t, speed, dt) {
+    const dx = t.x - W.x, dy = t.y - W.y;
+    const d = Math.hypot(dx, dy);
+    if (d < 0.01) { W.moving = false; return true; }
+    W.targetAngle = Math.atan2(dy, dx) / DEG + 90;
+    const moved = Math.min(d, speed * dt);
+    W.x += (dx / d) * moved;
+    W.y += (dy / d) * moved;
+    const stride = 26 * settings.size;
+    W.phase += Math.min((moved / stride) * Math.PI * 2, dt * Math.PI * 2 * 5.5);
+    W.moving = true;
+    return moved >= d - 0.01;
+  }
+
+  function catchableOnLine(i) {
+    return (W.lineErrs[i] || []).filter((it) => !it.err.caught && catchable(it.err));
+  }
+
+  /* Send legs out to the next batch of mistakes on this line. */
+  function nextWave() {
+    for (const L of W.legs) L.tk = 0;
+    W.wave = [];
+    W.reachHold = -1;
+    W.reachQueue = W.reachQueue.filter((it) => !it.err.caught && catchable(it.err));
+    if (!W.reachQueue.length) { W.mode = "descend"; return; }
+    const a = W.angle * DEG, cos = Math.cos(a), sin = Math.sin(a);
+    const sides = [[], []];
+    for (const it of W.reachQueue) {
+      const lx = (it.x - W.x) * cos + (it.y - W.y) * sin; // left or right from the spider's point of view
+      sides[lx >= 0 ? 0 : 1].push({ it, dist: Math.abs(lx) });
+    }
+    const order = [1, 2, 0, 3]; // middle legs take the nearest mistakes, front and back legs the farther ones
+    sides.forEach((arr, side) => {
+      arr.sort((p, q) => p.dist - q.dist);
+      arr.slice(0, 4).forEach((p, j) => {
+        const n = side * 4 + order[j];
+        const L = W.legs[n];
+        L.tx = p.it.x; L.ty = p.it.y; L.tk = 1;
+        W.wave.push({ leg: n, it: p.it });
+      });
+    });
+    const taken = new Set(W.wave.map((w) => w.it));
+    W.reachQueue = W.reachQueue.filter((it) => !taken.has(it));
+    W.mode = "reach";
+  }
+
+  function step(dt) {
+    const v = SPEEDS[settings.speed - 1].px;
+    const travelSpeed = Math.max(v * 1.6, 70);
+    switch (W.mode) {
+      case "idle":
+      case "done":
+        W.mode = "next-page";
+        break;
+
+      case "next-page": {
+        const nx = findNextPage();
+        if (nx.page) {
+          if (nx.page.ready) startPage(nx.page);
+          else { setFrame(nx.page); W.mode = "wait"; refreshUI(); }
+        } else if (nx.loading) {
+          W.mode = "wait-doc";
+          refreshUI();
+        } else {
+          finishWalk();
+        }
+        break;
+      }
+
+      case "wait": {
+        const page = W.page;
+        if (!page || page.doc.removed || page.walked) { W.mode = "next-page"; break; }
+        if (page.ready) { startPage(page); break; }
+        moveToward({ x: pageCenter(page), y: -4 }, travelSpeed, dt);
+        break;
+      }
+
+      case "wait-doc": {
+        W.moving = false;
+        const nx = findNextPage();
+        if (nx.page || !nx.loading) W.mode = "next-page";
+        break;
+      }
+
+      case "travel":
+        if (moveToward(W.target, travelSpeed, dt)) W.mode = "descend";
+        break;
+
+      case "descend": {
+        if (W.page.el.offsetHeight !== W.pageH) { relayout(true); break; } // fonts or layout changed
+        let stop = W.lineIdx;
+        while (stop < W.lines.length && !catchableOnLine(stop).length) stop++;
+        const stopY = stop < W.lines.length ? W.lines[stop].cy : Infinity;
+        const goalY = Math.min(bottomY(), stopY);
+        if (moveToward({ x: W.col, y: goalY }, v, dt)) {
+          if (goalY === stopY) {
+            W.lineIdx = stop + 1;
+            W.reachQueue = catchableOnLine(stop);
+            nextWave();
+          } else {
+            W.lineIdx = W.lines.length;
+            endPage();
+          }
+        }
+        break;
+      }
+
+      case "reach": {
+        W.moving = false;
+        if (W.reachHold < 0) {
+          const touched = W.wave.every(({ leg }) => {
+            const L = W.legs[leg];
+            return L.k > 0.9 && Math.abs(L.px - L.tx) < 3 && Math.abs(L.py - L.ty) < 3;
+          });
+          if (touched) {
+            let first = true;
+            for (const { it } of W.wave) {
+              if (!it.err.caught && catchable(it.err)) { catchError(it.err, true, !first); first = false; }
+            }
+            W.reachHold = Math.max(0.12, settings.pause);
+          }
+        } else {
+          W.reachHold -= dt;
+          if (W.reachHold <= 0) nextWave();
+        }
+        break;
+      }
+    }
+  }
+
+  /* Ease every leg toward what it's reaching for (or back to walking). */
+  function updateLegs(dt) {
+    const f = Math.min(1, dt * (9 + settings.speed * 1.2));
+    for (const L of W.legs) {
+      if (L.tk > 0) {
+        if (L.k < 0.03) { L.px = L.tx; L.py = L.ty; }
+        else { L.px += (L.tx - L.px) * f; L.py += (L.ty - L.py) * f; }
+      }
+      L.k += (L.tk - L.k) * f;
+      if (L.tk === 0 && L.k < 0.003) L.k = 0;
+    }
+  }
+
+  /* ---------------- Drawing ---------------- */
+  function showBubble(text, ms) {
+    W.bubbleText = text;
+    W.bubbleUntil = ms ? performance.now() + ms : Infinity;
+  }
+
+  function render(dt, now) {
+    const visible = W.page ? W.page.el.isConnected : (W.running && docs.length > 0);
+    spider.svg.style.display = visible ? "" : "none";
+    if (!visible) {
+      els.silk.style.display = "none";
+      els.bubble.hidden = true;
+      return;
+    }
+    const off = frameOffset(W.page);
+    const ax = W.x + off.x, ay = W.y + off.y;
+    spider.place(ax, ay, W.angle);
+    W.stride += ((W.moving ? 1 : 0) - W.stride) * Math.min(1, dt * 10);
+
+    // Turn each reaching leg's target into the spider's own coordinates
+    const a = W.angle * DEG, cos = Math.cos(a), sin = Math.sin(a), s = settings.size;
+    const reach = W.legs.map((L) => {
+      if (L.k <= 0) return null;
+      const dx = (L.px - W.x) / s, dy = (L.py - W.y) / s;
+      return { x: dx * cos + dy * sin, y: -dx * sin + dy * cos, k: L.k };
+    });
+    spider.pose(W.phase, W.busy, W.idle, W.stride, reach);
+
+    // Silk thread from the top of the page straight down to the spider's back end
+    const onSilk = W.page && (W.mode === "descend" || W.mode === "reach" || (W.mode === "travel" && W.y > 0));
+    if (settings.silk && onSilk) {
+      const r = 24 * s;
+      const bx = ax - Math.sin(a) * r, by = ay + Math.cos(a) * r;
+      const sx = ax, sy = off.y;
+      const len = Math.max(0, Math.hypot(bx - sx, by - sy));
+      els.silk.style.display = "block";
+      els.silk.style.width = len + "px";
+      els.silk.style.transform = `translate(${sx}px, ${sy}px) rotate(${Math.atan2(by - sy, bx - sx)}rad)`;
+    } else {
+      els.silk.style.display = "none";
+    }
+
+    // Speech bubble
+    let text = "";
+    if (W.running && (W.mode === "wait" || W.mode === "wait-doc")) text = "Reading ahead…";
+    else if (now < W.bubbleUntil) text = W.bubbleText;
+    if (text) {
+      if (els.bubble.textContent !== text) els.bubble.textContent = text;
+      els.bubble.hidden = false;
+      els.bubble.style.transform = `translate(${ax}px, ${ay - 34 * s}px) translate(-50%, -100%)`;
+    } else {
+      els.bubble.hidden = true;
+    }
+
+    // Keep the spider in view
+    if (settings.follow && W.running && !W.paused && now > userScrollUntil) {
+      const v = els.viewer;
+      const desired = els.pages.offsetTop + ay - v.clientHeight * 0.42;
+      const target = Math.max(0, Math.min(desired, v.scrollHeight - v.clientHeight));
+      const diff = target - v.scrollTop;
+      if (Math.abs(diff) > 0.5) v.scrollTop += reducedMotion ? diff : diff * Math.min(1, dt * 3.2);
+    }
+  }
+
+  let lastFrame = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, Math.max(0, (now - lastFrame) / 1000));
+    lastFrame = now;
+    W.idle += dt;
+
+    if (W.mode === "spin") {
+      W.moving = false;
+      W.spin -= dt;
+      W.angle += (360 * dt) / 1.1;
+      W.targetAngle = W.angle;
+      if (W.spin <= 0) { W.mode = "done"; W.angle %= 360; W.targetAngle = W.angle; refreshUI(); }
+    } else if (W.running && !W.paused) {
+      step(dt);
+    } else {
+      W.moving = false;
+    }
+
+    updateLegs(dt);
+    W.busy += ((W.mode === "reach" ? 1 : 0) - W.busy) * Math.min(1, dt * 10);
+    if (W.mode !== "spin") {
+      const d = ((((W.targetAngle - W.angle) % 360) + 540) % 360) - 180;
+      W.angle += d * Math.min(1, dt * 9);
+    }
+    render(dt, now);
+
+    if (!els.empty.hidden) {
+      const sway = Math.sin(W.idle * 0.9) * 7;
+      emptySpider.place(100 + sway * 0.6, 150 + Math.sin(W.idle * 1.3) * 4, 180 + sway);
+      emptySpider.pose(W.idle * 0.4, 0, W.idle, 0.12, null);
+      const thread = els.emptyArt.firstElementChild;
+      thread.style.height = 150 + Math.sin(W.idle * 1.3) * 4 - 40 + "px";
+      thread.style.transform = `translateX(${sway * 0.3}px) rotate(${-sway * 0.18}deg)`;
+    }
+    requestAnimationFrame(frame);
+  }
+
+  /* ==========================================================================
+     UI wiring
+     ========================================================================== */
+  function refreshUI() {
+    const loaded = anyLoaded();
+    const unwalked = hasUnwalked();
+    const walkingPage = W.running && W.page && WALKING_MODES.includes(W.mode);
+
+    let label;
+    if (W.running) label = W.paused ? "Resume" : "Pause";
+    else if (!unwalked && loaded) label = "Walk again";
+    else if (docs.some((d) => d.pages.some((p) => p.walked))) label = "Keep walking";
+    else label = "Start walking";
+    els.run.textContent = label;
+    els.run.disabled = !loaded;
+    els.skip.disabled = !walkingPage;
+    els.all.disabled = !unwalked || !loaded;
+    els.recheck.disabled = !docs.some((d) => d.loaded);
+    updateStatus();
+  }
+
+  function updateStatus() {
+    const total = CATS.reduce((a, c) => a + (settings.show[c] ? counts[c] : 0), 0);
+    const word = total === 1 ? "mistake" : "mistakes";
+    let msg;
+    if (!docs.length) msg = "Add documents to begin.";
+    else if (W.running && W.paused) msg = "Paused. Press Resume to keep walking.";
+    else if (W.running && W.mode === "wait") {
+      msg = ltWaiting
+        ? "Waiting for LanguageTool's free limit to reset. This can take up to a minute."
+        : `Waiting for page ${W.page.index + 1} of “${W.page.doc.name}” to finish checking…`;
+    } else if (W.running && W.mode === "wait-doc") msg = "Waiting for the next document to open…";
+    else if (W.running && W.page) msg = `Walking page ${W.page.index + 1} of ${W.page.doc.pages.length} in “${W.page.doc.name}”.`;
+    else if (!hasUnwalked() && anyLoaded()) {
+      const n = docs.filter((d) => d.loaded).length;
+      msg = `Finished. Caught ${total} ${word} in ${n} ${n === 1 ? "document" : "documents"}.`;
+    } else if (docs.some((d) => d.checking || !d.loaded)) msg = "Checking your documents. You can start walking now.";
+    else msg = "Ready. Press Start walking.";
+    if (els.status.textContent !== msg) els.status.textContent = msg;
+  }
+
+  let toastTimer = null;
+  function notice(msg) {
+    els.toast.textContent = msg;
+    els.toast.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { els.toast.hidden = true; }, 7000);
+  }
+
+  /* ---------------- Sound ---------------- */
+  let audio = null;
+  function ensureAudio() {
+    if (!settings.sound) return;
+    try {
+      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+      if (audio.state === "suspended") audio.resume();
+    } catch (e) { audio = null; }
+  }
+  function playCatchSound(cat) {
+    if (!settings.sound) return;
+    ensureAudio();
+    if (!audio) return;
+    const t = audio.currentTime;
+    const o = audio.createOscillator();
+    const g = audio.createGain();
+    const f = cat === "spelling" ? 660 : cat === "grammar" ? 520 : 420;
+    o.type = "triangle";
+    o.frequency.setValueAtTime(f, t);
+    o.frequency.exponentialRampToValueAtTime(f * 1.6, t + 0.08);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.09, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.17);
+    o.connect(g).connect(audio.destination);
+    o.start(t);
+    o.stop(t + 0.2);
+  }
+
+  /* ---------------- Report ---------------- */
+  function contextOf(err) {
+    const t = err.page.text;
+    const a = Math.max(0, err.offset - 40), b = Math.min(t.length, err.offset + err.length + 40);
+    return (a > 0 ? "…" : "") + t.slice(a, b).replace(/\s+/g, " ") + (b < t.length ? "…" : "");
+  }
+  function csvCell(v) {
+    let s = String(v == null ? "" : v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; // stop spreadsheets treating text as a formula
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  function downloadReport() {
+    const rows = [["Document", "Page", "Type", "Mistake", "Message", "Suggestions", "Context"]];
+    for (const doc of docs) {
+      for (const page of doc.pages) {
+        for (const err of page.errors) {
+          if (!err.caught || !settings.show[err.category]) continue;
+          rows.push([doc.name, page.index + 1, CAT_LABEL[err.category], err.text, err.message,
+            err.replacements.join(" | "), contextOf(err)]);
+        }
+      }
+    }
+    const csv = rows.map((r) => r.map(csvCell).join(",")).join("\r\n");
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "spell-spider-report.csv";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+  }
+
+  /* ---------------- Sample ---------------- */
+  const SAMPLE = `The Library at the Edge of Town
+
+Last saturday, me and my freind decided to explore the old libary at the edge of town. Their is a rumor that the building is haunted, but we didnt believe it. When we arrived , the door was already open and a owl was sitting on the stairs.
+
+Inside, it was more darker then we expected. My freind said we should of brought a flashlight. i agreed, but we kept walking anyway. The the floor creaked under every step, and dust floated in the air like tiny ghosts.
+
+We found a book that had fell off a shelf. Its a diary from 1923, and the handwritting was beautiful.The last page said: "Whoever reads this, please take care of the library." We was so suprised that we almost dropped it.
+
+Now we visit every week and help sort the shelfs. Its not haunted at all. It was just lonely, and it needed somebody to notice it.`;
+
+  function loadSample() {
+    const file = new File([SAMPLE], "sample-story.txt", { type: "text/plain" });
+    addFiles([file]);
+  }
+
+  /* ---------------- Controls ---------------- */
+  function applySettingsToUI() {
+    els.speed.value = settings.speed;
+    els.speedOut.textContent = SPEEDS[settings.speed - 1].name;
+    els.pause.value = settings.pause;
+    els.pauseOut.textContent = settings.pause > 0 ? settings.pause.toFixed(1) + " s" : "No stop";
+    els.size.value = settings.size;
+    els.sizeOut.textContent = Math.round(settings.size * 100) + "%";
+    els.follow.checked = settings.follow;
+    els.silkToggle.checked = settings.silk;
+    els.sound.checked = settings.sound;
+    els.language.value = settings.language;
+    els.ignore.value = settings.ignore;
+    document.querySelectorAll('input[name="engine"]').forEach((r) => { r.checked = r.value === settings.engine; });
+    els.langRow.hidden = settings.engine !== "languagetool";
+    applyKindVisibility();
+  }
+
+  function buildSwatches() {
+    const frag = document.createDocumentFragment();
+    const themes = window.Spider.THEMES;
+    for (const id of THEME_ORDER) {
+      const t = themes[id];
+      const label = document.createElement("label");
+      label.className = "swatch";
+      label.title = t.name;
+      const input = document.createElement("input");
+      input.type = "radio";
+      input.name = "theme";
+      input.value = id;
+      input.setAttribute("aria-label", t.name);
+      input.checked = settings.theme === id;
+      const dot = document.createElement("span");
+      const stops = t.body.concat(t.body[0]).join(", ");
+      dot.style.setProperty("--sw", `conic-gradient(from 200deg, ${stops})`);
+      label.append(input, dot);
+      frag.appendChild(label);
+    }
+    const custom = document.createElement("label");
+    custom.className = "swatch swatch-custom";
+    custom.title = "One color of your choice";
+    const radio = document.createElement("input");
+    radio.type = "radio";
+    radio.name = "theme";
+    radio.value = "custom";
+    radio.setAttribute("aria-label", "One color of your choice");
+    radio.checked = settings.theme === "custom";
+    const dot = document.createElement("span");
+    dot.style.setProperty("--sw", settings.color);
+    const picker = document.createElement("input");
+    picker.type = "color";
+    picker.value = settings.color;
+    picker.setAttribute("aria-label", "Choose the spider's color");
+    picker.tabIndex = -1;
+    custom.append(radio, dot, picker);
+    frag.appendChild(custom);
+    els.colors.appendChild(frag);
+    els.themeName.textContent = settings.theme === "custom" ? "Your color" : themes[settings.theme].name;
+
+    els.colors.addEventListener("change", (e) => {
+      if (e.target.name !== "theme") return;
+      if (e.target.value === "custom") picker.click();
+      setTheme(e.target.value);
+    });
+    picker.addEventListener("input", () => {
+      radio.checked = true;
+      settings.color = picker.value;
+      dot.style.setProperty("--sw", picker.value);
+      setTheme("custom");
+    });
+  }
+
+  function setTheme(id) {
+    settings.theme = id;
+    spider.setTheme(id, settings.color);
+    emptySpider.setTheme(id, settings.color);
+    els.themeName.textContent = id === "custom" ? "Your color" : window.Spider.THEMES[id].name;
+    saveSettings();
+  }
+
+  function applyKindVisibility() {
+    for (const c of CATS) {
+      els.pages.classList.toggle("hide-" + c, !settings.show[c]);
+      els.caughtList.classList.toggle("hide-" + c, !settings.show[c]);
+      const chip = document.querySelector(`.chip[data-cat="${c}"]`);
+      if (chip) chip.setAttribute("aria-pressed", String(settings.show[c]));
+    }
+  }
+
+  function parseIgnore(text) {
+    return new Set(text.split(/[\n,;]+/).map((s) => s.trim().toLowerCase().replace(/’/g, "'")).filter(Boolean));
+  }
+
+  function wire() {
+    els.run.addEventListener("click", () => {
+      ensureAudio();
+      if (W.running) {
+        W.paused = !W.paused;
+      } else {
+        if (!hasUnwalked()) { resetCatches(); placeIdleSpider(true); }
+        W.running = true;
+        W.paused = false;
+        if (!["wait", "wait-doc", ...WALKING_MODES].includes(W.mode)) W.mode = "next-page";
+        userScrollUntil = 0;
+      }
+      refreshUI();
+    });
+
+    els.skip.addEventListener("click", () => {
+      if (W.running && W.page && WALKING_MODES.includes(W.mode)) endPage();
+    });
+
+    els.all.addEventListener("click", () => {
+      for (const doc of docs) {
+        for (const page of doc.pages) {
+          if (page.walked) continue;
+          if (page.ready) sweepPage(page, false);
+          else page.autoCatch = true;
+        }
+      }
+      releaseLegs();
+      W.running = false;
+      W.paused = false;
+      W.mode = "idle";
+      refreshUI();
+    });
+
+    els.speed.addEventListener("input", () => {
+      settings.speed = +els.speed.value;
+      els.speedOut.textContent = SPEEDS[settings.speed - 1].name;
+      saveSettings();
+    });
+    els.pause.addEventListener("input", () => {
+      settings.pause = +els.pause.value;
+      els.pauseOut.textContent = settings.pause > 0 ? settings.pause.toFixed(1) + " s" : "No stop";
+      saveSettings();
+    });
+    els.size.addEventListener("input", () => {
+      settings.size = +els.size.value;
+      els.sizeOut.textContent = Math.round(settings.size * 100) + "%";
+      spider.setSize(settings.size);
+      saveSettings();
+    });
+    els.follow.addEventListener("change", () => { settings.follow = els.follow.checked; saveSettings(); });
+    els.silkToggle.addEventListener("change", () => { settings.silk = els.silkToggle.checked; saveSettings(); });
+    els.sound.addEventListener("change", () => {
+      settings.sound = els.sound.checked;
+      saveSettings();
+      if (settings.sound) { ensureAudio(); playCatchSound("spelling"); }
+    });
+
+    document.querySelectorAll('input[name="engine"]').forEach((r) => {
+      r.addEventListener("change", () => {
+        if (!r.checked) return;
+        settings.engine = r.value;
+        saveSettings();
+        els.langRow.hidden = settings.engine !== "languagetool";
+        els.engineNote.hidden = !docs.some((d) => d.loaded);
+        if (settings.engine === "builtin") C.Builtin.load();
+      });
+    });
+    els.language.addEventListener("change", () => {
+      settings.language = els.language.value;
+      saveSettings();
+      els.engineNote.hidden = !docs.some((d) => d.loaded) || settings.engine !== "languagetool";
+    });
+
+    let ignoreTimer = null;
+    els.ignore.addEventListener("input", () => {
+      clearTimeout(ignoreTimer);
+      ignoreTimer = setTimeout(() => {
+        settings.ignore = els.ignore.value;
+        ignoreSet = parseIgnore(settings.ignore);
+        saveSettings();
+        syncCatches();
+      }, 350);
+    });
+
+    els.recheck.addEventListener("click", recheckAll);
+
+    document.querySelectorAll(".chip").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        const c = chip.dataset.cat;
+        settings.show[c] = !settings.show[c];
+        saveSettings();
+        applyKindVisibility();
+        syncCatches();
+        renderCounts();
+      });
+    });
+
+    els.report.addEventListener("click", downloadReport);
+
+    els.fileInput.addEventListener("change", () => {
+      const files = Array.from(els.fileInput.files || []);
+      els.fileInput.value = "";
+      if (files.length) addFiles(files);
+    });
+    els.sample.addEventListener("click", loadSample);
+    els.emptySample.addEventListener("click", loadSample);
+
+    // Clicking an outlined mistake highlights it in the list
+    els.pages.addEventListener("click", (e) => {
+      const m = e.target.closest("mark.err.caught");
+      if (!m) return;
+      const err = errorsById.get(+m.dataset.id);
+      if (!err || !err.item) return;
+      setActiveItem(err);
+      revealInList(err.item, true);
+    });
+
+    // If you scroll the documents yourself, the camera stops following for a few seconds
+    const userScrolled = () => { userScrollUntil = performance.now() + 4000; };
+    els.viewer.addEventListener("wheel", userScrolled, { passive: true });
+    els.viewer.addEventListener("touchmove", userScrolled, { passive: true });
+    els.viewer.addEventListener("keydown", (e) => {
+      if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(e.key)) userScrolled();
+    });
+
+    // Drag and drop anywhere
+    let dragDepth = 0;
+    const hasFiles = (e) => e.dataTransfer && Array.from(e.dataTransfer.types || []).includes("Files");
+    window.addEventListener("dragenter", (e) => {
+      if (!hasFiles(e)) return;
+      dragDepth++;
+      els.dropOverlay.hidden = false;
+    });
+    window.addEventListener("dragleave", (e) => {
+      if (!hasFiles(e)) return;
+      dragDepth = Math.max(0, dragDepth - 1);
+      if (!dragDepth) els.dropOverlay.hidden = true;
+    });
+    window.addEventListener("dragover", (e) => { if (hasFiles(e)) e.preventDefault(); });
+    window.addEventListener("drop", (e) => {
+      if (!hasFiles(e)) return;
+      e.preventDefault();
+      dragDepth = 0;
+      els.dropOverlay.hidden = true;
+      const files = Array.from(e.dataTransfer.files || []);
+      if (files.length) addFiles(files);
+    });
+
+    // Re-measure lines when the layout width changes or web fonts finish loading
+    let relayoutTimer = null;
+    const scheduleRelayout = () => {
+      clearTimeout(relayoutTimer);
+      relayoutTimer = setTimeout(relayout, 120);
+    };
+    if (window.ResizeObserver) new ResizeObserver(scheduleRelayout).observe(els.pages);
+    else window.addEventListener("resize", scheduleRelayout);
+    if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener("loadingdone", scheduleRelayout);
+
+    C.LanguageTool.onWait = (waiting) => { ltWaiting = waiting; updateStatus(); };
+  }
+
+  /* ---------------- Start ---------------- */
+  ignoreSet = parseIgnore(settings.ignore);
+  buildSwatches();
+  applySettingsToUI();
+  wire();
+  renderCounts();
+  refreshUI();
+  requestAnimationFrame(frame);
+
+  // A tiny hook for testing from the browser console
+  window.SpellSpider = { addFiles, state: W, docs, settings };
+})();
+
+</script>
 </body>
 </html>
