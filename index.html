@@ -97,8 +97,7 @@ body {
   margin: 0;
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  height: 100dvh;
+  height: 100%;
   background: var(--dusk);
   color: var(--ink);
   font-family: var(--font-ui);
@@ -510,6 +509,15 @@ mark.err.caught.flash { animation: flash 1.2s ease-out; }
 .ci-msg { display: block; margin-top: 1px; font-size: 13px; color: var(--ink-soft); line-height: 1.4; }
 .ci-fix { display: block; margin-top: 3px; font-size: 13px; font-weight: 700; color: rgb(var(--c)); }
 .caught-foot { padding: 12px 20px 16px; border-top: 1px solid var(--line); }
+.report-text {
+  margin-top: 10px; font-size: 12px; font-family: var(--font-ui);
+  white-space: pre; overflow: auto;
+}
+.noscript {
+  margin: 0; padding: 14px 20px;
+  background: rgb(var(--c-spelling) / .12); color: var(--ink);
+  font-weight: 700;
+}
 
 /* ---------- Overlays ---------- */
 .drop-overlay {
@@ -550,7 +558,7 @@ mark.err.caught.flash { animation: flash 1.2s ease-out; }
   .run .btn-primary { min-width: 0; }
   .speed { width: 100%; }
   .speed input { flex: 1; width: auto; }
-  .pages { padding: 16px 12px 100px; }
+  .pages { padding: 16px 16px 100px; }
   .page { padding: 32px 22px 24px; }
   .page-body p { font-size: 16px; line-height: 1.72; }
   .panel-settings { padding: 8px 16px 24px; }
@@ -566,6 +574,7 @@ mark.err.caught.flash { animation: flash 1.2s ease-out; }
 </style>
 </head>
 <body>
+  <noscript><p class="noscript">Spell Spider needs JavaScript to run. If you're seeing this inside a file preview, open the file in a web browser such as Chrome, Edge or Safari instead.</p></noscript>
   <header class="topbar">
     <a class="brand" href="./" aria-label="Spell Spider home">
       <svg class="brand-mark" viewBox="-50 -50 100 100" aria-hidden="true">
@@ -648,7 +657,8 @@ mark.err.caught.flash { animation: flash 1.2s ease-out; }
 
       <section class="group">
         <h2>Checker</h2>
-        <fieldset class="field engines">
+        <p id="hostNote" class="note" hidden>Checking happens privately in your browser. Your documents are never uploaded anywhere.</p>
+        <fieldset class="field engines" id="engines">
           <legend class="sr-only">How to check</legend>
           <label class="engine">
             <input type="radio" name="engine" value="languagetool" checked>
@@ -675,7 +685,7 @@ mark.err.caught.flash { animation: flash 1.2s ease-out; }
         </div>
         <p id="engineNote" class="note" hidden>This applies to documents you add from now on. Re-check to use it on the ones already here.</p>
         <button id="btnRecheck" class="btn btn-wide" type="button" disabled>Re-check all documents</button>
-        <p class="credit">Online grammar checking by <a href="https://languagetool.org" target="_blank">LanguageTool</a>. Their <a href="https://languagetool.org/legal/privacy" target="_blank">privacy policy</a> explains how text is handled.</p>
+        <p class="credit" id="credit">Online grammar checking by <a href="https://languagetool.org" target="_blank">LanguageTool</a>. Their <a href="https://languagetool.org/legal/privacy" target="_blank">privacy policy</a> explains how text is handled.</p>
       </section>
     </aside>
 
@@ -710,6 +720,7 @@ mark.err.caught.flash { animation: flash 1.2s ease-out; }
       </div>
       <div class="caught-foot">
         <button id="btnReport" class="btn btn-wide" type="button" disabled>Download report (.csv)</button>
+        <textarea id="reportText" class="report-text" rows="5" readonly hidden aria-label="Report text to copy"></textarea>
       </div>
     </aside>
   </main>
@@ -1263,10 +1274,16 @@ mark.err.caught.flash { animation: flash 1.2s ease-out; }
         this._loading = (async () => {
           try {
             await loadScript(TYPO_URL);
-            const [aff, dic] = await Promise.all([
-              fetch(DICT_BASE + ".aff").then((r) => { if (!r.ok) throw new Error(); return r.text(); }),
-              fetch(DICT_BASE + ".dic").then((r) => { if (!r.ok) throw new Error(); return r.text(); }),
-            ]);
+            const get = (url) => fetch(url).then((r) => { if (!r.ok) throw new Error(url); return r.text(); });
+            // A copy of the dictionary published next to the page is used first when there is one.
+            const sources = window.SPELL_SPIDER_HOST === "artifact"
+              ? [["dict/en_US.aff.txt", "dict/en_US.dic.txt"], [DICT_BASE + ".aff", DICT_BASE + ".dic"]]
+              : [[DICT_BASE + ".aff", DICT_BASE + ".dic"]];
+            let aff = null, dic = null;
+            for (const [a, d] of sources) {
+              try { [aff, dic] = await Promise.all([get(a), get(d)]); break; } catch (e) { /* try the next copy */ }
+            }
+            if (!aff || !dic) throw new Error("no dictionary");
             await sleep(30); // let the page paint the "loading dictionary" message first
             // eslint-disable-next-line no-undef
             this.typo = new Typo("en_US", aff, dic);
@@ -1887,6 +1904,11 @@ mark.err.caught.flash { animation: flash 1.2s ease-out; }
   }
   const settings = loadSettings();
 
+  // "artifact" when this runs as a hosted Claude page, where outside network
+  // requests and downloads are blocked: checking stays private and the report is copied.
+  const HOST = window.SPELL_SPIDER_HOST || "web";
+  if (HOST === "artifact") settings.engine = "builtin";
+
   /* ---------------- Elements ---------------- */
   const els = {
     run: $("#btnRun"), skip: $("#btnSkip"), all: $("#btnAll"),
@@ -1899,7 +1921,8 @@ mark.err.caught.flash { animation: flash 1.2s ease-out; }
     viewer: $("#viewer"), pages: $("#pages"), empty: $("#empty"), emptyArt: $("#emptyArt"),
     silk: $("#silk"), bubble: $("#bubble"), dropOverlay: $("#dropOverlay"), toast: $("#toast"),
     caughtCount: $("#caughtCount"), caughtList: $("#caughtList"), caughtEmpty: $("#caughtEmpty"),
-    caughtScroll: $("#caughtScroll"), report: $("#btnReport"),
+    caughtScroll: $("#caughtScroll"), report: $("#btnReport"), reportText: $("#reportText"),
+    engines: $("#engines"), credit: $("#credit"), hostNote: $("#hostNote"),
     n: { spelling: $("#nSpelling"), grammar: $("#nGrammar"), style: $("#nStyle") },
   };
 
@@ -2989,7 +3012,7 @@ mark.err.caught.flash { animation: flash 1.2s ease-out; }
     if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; // stop spreadsheets treating text as a formula
     return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   }
-  function downloadReport() {
+  function reportRows() {
     const rows = [["Document", "Page", "Type", "Mistake", "Message", "Suggestions", "Context"]];
     for (const doc of docs) {
       for (const page of doc.pages) {
@@ -3000,8 +3023,12 @@ mark.err.caught.flash { animation: flash 1.2s ease-out; }
         }
       }
     }
-    const csv = rows.map((r) => r.map(csvCell).join(",")).join("\r\n");
-    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+    return rows;
+  }
+
+  function downloadReport() {
+    const csv = reportRows().map((r) => r.map(csvCell).join(",")).join("\r\n");
+    const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -3010,6 +3037,28 @@ mark.err.caught.flash { animation: flash 1.2s ease-out; }
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 3000);
+  }
+
+  /* Where downloads are blocked, copy the report instead. Tabs between columns
+     make it paste straight into a spreadsheet. */
+  function copyReport() {
+    const text = reportRows().map((r) => r.map((v) => String(v).replace(/[\t\r\n]+/g, " ")).join("\t")).join("\n");
+    const box = els.reportText;
+    const showBox = () => {
+      box.value = text;
+      box.hidden = false;
+      box.focus();
+      box.select();
+      notice("Your browser blocked copying. The report is selected below, so press Ctrl+C (or Cmd+C) to copy it.");
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        box.hidden = true;
+        notice("Report copied. Paste it into Google Sheets, Excel or a document.");
+      }, showBox);
+    } else {
+      showBox();
+    }
   }
 
   /* ---------------- Sample ---------------- */
@@ -3043,6 +3092,13 @@ Now we visit every week and help sort the shelfs. Its not haunted at all. It was
     els.ignore.value = settings.ignore;
     document.querySelectorAll('input[name="engine"]').forEach((r) => { r.checked = r.value === settings.engine; });
     els.langRow.hidden = settings.engine !== "languagetool";
+    if (HOST === "artifact") {
+      els.engines.hidden = true;
+      els.langRow.hidden = true;
+      els.credit.hidden = true;
+      els.hostNote.hidden = false;
+      els.report.textContent = "Copy report";
+    }
     applyKindVisibility();
   }
 
@@ -3219,7 +3275,7 @@ Now we visit every week and help sort the shelfs. Its not haunted at all. It was
       });
     });
 
-    els.report.addEventListener("click", downloadReport);
+    els.report.addEventListener("click", HOST === "artifact" ? copyReport : downloadReport);
 
     els.fileInput.addEventListener("change", () => {
       const files = Array.from(els.fileInput.files || []);
