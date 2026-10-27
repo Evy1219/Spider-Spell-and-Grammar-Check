@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spell Spider</title>
+  <meta name="description" content="A proofreading spider that walks across your documents and catches spelling and grammar mistakes as it goes.">
+  <meta name="theme-color" content="#2b2140">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-50 -50 100 100'%3E%3Cg stroke-width='7' stroke-linecap='round' fill='none'%3E%3Cpath stroke='%23ff4d6d' d='M-8 -6 L-26 -26 L-36 -14M8 -6 L26 -26 L36 -14'/%3E%3Cpath stroke='%23ff9f1c' d='M-9 0 L-30 -6 L-42 4M9 0 L30 -6 L42 4'/%3E%3Cpath stroke='%232ec4b6' d='M-9 6 L-30 14 L-40 28M9 6 L30 14 L40 28'/%3E%3Cpath stroke='%238338ec' d='M-7 12 L-22 30 L-26 44M7 12 L22 30 L26 44'/%3E%3C/g%3E%3Cellipse cx='0' cy='14' rx='14' ry='17' fill='%233a86ff' stroke='%232a1840' stroke-width='3'/%3E%3Cellipse cx='0' cy='-8' rx='11' ry='10' fill='%238338ec' stroke='%232a1840' stroke-width='3'/%3E%3Ccircle cx='-4.5' cy='-11' r='4' fill='%23fff'/%3E%3Ccircle cx='4.5' cy='-11' r='4' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="Spell Spider home">
+      <svg class="brand-mark" viewBox="-50 -50 100 100" aria-hidden="true">
+        <defs>
+          <linearGradient id="brandBody" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#ff4d6d"/><stop offset=".25" stop-color="#ff9f1c"/>
+            <stop offset=".45" stop-color="#ffd23f"/><stop offset=".65" stop-color="#2ec4b6"/>
+            <stop offset=".85" stop-color="#3a86ff"/><stop offset="1" stop-color="#8338ec"/>
+          </linearGradient>
+        </defs>
+        <g stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none">
+          <path stroke="#ff4d6d" d="M-8 -6 L-26 -26 L-36 -14M8 -6 L26 -26 L36 -14"/>
+          <path stroke="#ff9f1c" d="M-9 0 L-30 -6 L-42 4M9 0 L30 -6 L42 4"/>
+          <path stroke="#2ec4b6" d="M-9 6 L-30 14 L-40 28M9 6 L30 14 L40 28"/>
+          <path stroke="#8338ec" d="M-7 12 L-22 30 L-26 44M7 12 L22 30 L26 44"/>
+        </g>
+        <ellipse cx="0" cy="14" rx="14" ry="17" fill="url(#brandBody)" stroke="#2a1840" stroke-width="2"/>
+        <ellipse cx="0" cy="-8" rx="11" ry="10" fill="#8338ec" stroke="#2a1840" stroke-width="2"/>
+        <circle cx="-4.5" cy="-11" r="3.6" fill="#fff"/>
+        <circle cx="4.5" cy="-11" r="3.6" fill="#fff"/>
+      </svg>
+      <span>Spell Spider</span>
+    </a>
+
+    <div class="run" role="group" aria-label="Walk controls">
+      <button id="btnRun" class="btn btn-primary" type="button" disabled>Start walking</button>
+      <button id="btnSkip" class="btn" type="button" disabled>Skip page</button>
+      <button id="btnAll" class="btn" type="button" disabled>Find all now</button>
+    </div>
+
+    <label class="speed" for="speed">
+      <span class="speed-label">Speed</span>
+      <input id="speed" type="range" min="1" max="10" step="1" value="4" aria-describedby="speedOut">
+      <output id="speedOut" for="speed">Stroll</output>
+    </label>
+
+    <p id="status" class="status" role="status" aria-live="polite">Add documents to begin.</p>
+  </header>
+
+  <main class="layout">
+    <aside class="panel panel-settings" aria-label="Documents and settings">
+      <section class="group">
+        <h2>Documents</h2>
+        <label class="dropzone" for="fileInput">
+          <span class="dropzone-title">Add documents</span>
+          <span class="dropzone-hint">Text, PDF, Word or Markdown files. You can pick several at once or drop them anywhere.</span>
+          <input id="fileInput" type="file" multiple
+                 accept=".txt,.md,.markdown,.text,.pdf,.docx,text/plain,text/markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+        </label>
+        <ul id="docList" class="doc-list" aria-label="Added documents"></ul>
+        <button id="btnSample" class="text-btn" type="button">Try a sample document</button>
+      </section>
+
+      <section class="group">
+        <h2>Spider</h2>
+        <div class="field">
+          <label for="pause">Hold each catch</label>
+          <div class="range-row">
+            <input id="pause" type="range" min="0" max="2" step="0.1" value="0.6">
+            <output id="pauseOut" for="pause">0.6 s</output>
+          </div>
+        </div>
+        <div class="field">
+          <label for="size">Size</label>
+          <div class="range-row">
+            <input id="size" type="range" min="0.6" max="2.2" step="0.1" value="1.3">
+            <output id="sizeOut" for="size">130%</output>
+          </div>
+        </div>
+        <fieldset class="field">
+          <legend>Colors <span id="themeName" class="legend-note"></span></legend>
+          <div id="colors" class="swatches"></div>
+        </fieldset>
+        <div class="toggles">
+          <label class="toggle"><input id="follow" type="checkbox" checked> <span>Follow the spider as it walks</span></label>
+          <label class="toggle"><input id="silkToggle" type="checkbox" checked> <span>Show its silk thread</span></label>
+          <label class="toggle"><input id="sound" type="checkbox"> <span>Play a sound on each catch</span></label>
+        </div>
+      </section>
+
+      <section class="group">
+        <h2>Checker</h2>
+        <fieldset class="field engines">
+          <legend class="sr-only">How to check</legend>
+          <label class="engine">
+            <input type="radio" name="engine" value="languagetool" checked>
+            <span><b>Online</b><small>Best grammar checking. Your text is sent to LanguageTool.</small></span>
+          </label>
+          <label class="engine">
+            <input type="radio" name="engine" value="builtin">
+            <span><b>Private</b><small>Your text never leaves this browser. Catches fewer grammar mistakes.</small></span>
+          </label>
+        </fieldset>
+        <div class="field" id="langRow">
+          <label for="language">Language</label>
+          <select id="language">
+            <option value="en-US">English (US)</option>
+            <option value="en-GB">English (UK)</option>
+            <option value="en-CA">English (Canada)</option>
+            <option value="en-AU">English (Australia)</option>
+            <option value="auto">Detect automatically</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="ignore">Words to ignore</label>
+          <textarea id="ignore" rows="3" spellcheck="false" placeholder="Names, game terms, slang… one per line or separated by commas"></textarea>
+        </div>
+        <p id="engineNote" class="note" hidden>This applies to documents you add from now on. Re-check to use it on the ones already here.</p>
+        <button id="btnRecheck" class="btn btn-wide" type="button" disabled>Re-check all documents</button>
+        <p class="credit">Online grammar checking by <a href="https://languagetool.org" target="_blank">LanguageTool</a>. Their <a href="https://languagetool.org/legal/privacy" target="_blank">privacy policy</a> explains how text is handled.</p>
+      </section>
+    </aside>
+
+    <section id="viewer" class="viewer" aria-label="Documents">
+      <div id="pages" class="pages">
+        <div id="empty" class="empty">
+          <div class="empty-art" id="emptyArt" aria-hidden="true"><span class="empty-thread"></span></div>
+          <h1 class="empty-title">Give the spider something to read</h1>
+          <p class="empty-text">Add text, PDF or Word files. The spider climbs down every page and stretches its legs out to grab each spelling and grammar mistake it passes.</p>
+          <div class="empty-actions">
+            <label class="btn btn-primary" for="fileInput">Choose files</label>
+            <button id="emptySample" class="btn" type="button">Try a sample</button>
+          </div>
+        </div>
+        <div id="silk" class="silk" aria-hidden="true"></div>
+        <div id="bubble" class="bubble" hidden></div>
+      </div>
+    </section>
+
+    <aside class="panel panel-caught" aria-label="Mistakes caught">
+      <div class="caught-head">
+        <h2>Caught <span id="caughtCount" class="caught-count">0</span></h2>
+        <div class="filters" role="group" aria-label="Kinds of mistakes to catch">
+          <button class="chip" type="button" data-cat="spelling" aria-pressed="true"><i aria-hidden="true"></i>Spelling <b id="nSpelling">0</b></button>
+          <button class="chip" type="button" data-cat="grammar" aria-pressed="true"><i aria-hidden="true"></i>Grammar <b id="nGrammar">0</b></button>
+          <button class="chip" type="button" data-cat="style" aria-pressed="true"><i aria-hidden="true"></i>Style <b id="nStyle">0</b></button>
+        </div>
+      </div>
+      <div id="caughtScroll" class="caught-scroll">
+        <p id="caughtEmpty" class="caught-empty">Mistakes show up here as the spider catches them. Select one to jump to it.</p>
+        <ol id="caughtList" class="caught-list"></ol>
+      </div>
+      <div class="caught-foot">
+        <button id="btnReport" class="btn btn-wide" type="button" disabled>Download report (.csv)</button>
+      </div>
+    </aside>
+  </main>
+
+  <div id="dropOverlay" class="drop-overlay" hidden><p>Drop to add documents</p></div>
+  <div id="toast" class="toast" role="alert" hidden></div>
+
+  <script src="js/checker.js"></script>
+  <script src="js/extract.js"></script>
+  <script src="js/spider.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
