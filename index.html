@@ -1,0 +1,3906 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Spell Spider</title>
+  <meta name="description" content="A proofreading spider that walks down the middle of your documents and steps on every spelling and grammar mistake.">
+  <meta name="theme-color" content="#2b2140">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-50 -50 100 100'%3E%3Cg stroke='%232b2140' stroke-width='6' stroke-linecap='round' fill='none'%3E%3Cpath d='M-8 -6 L-26 -26 L-36 -14M8 -6 L26 -26 L36 -14M-9 0 L-30 -6 L-42 4M9 0 L30 -6 L42 4M-9 6 L-30 14 L-40 28M9 6 L30 14 L40 28M-7 12 L-22 30 L-26 44M7 12 L22 30 L26 44'/%3E%3C/g%3E%3Cellipse cx='0' cy='14' rx='14' ry='17' fill='%232b2140'/%3E%3Cellipse cx='0' cy='-8' rx='11' ry='10' fill='%23463764'/%3E%3Ccircle cx='-4.5' cy='-11' r='4' fill='%23fff'/%3E%3Ccircle cx='4.5' cy='-11' r='4' fill='%23fff'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&display=swap" rel="stylesheet">
+  <style>
+/* ==========================================================================
+   Spell Spider — styles
+   Palette: plum ink on dusky lavender, white paper pages,
+   three catch colors (spelling raspberry, grammar amber, style blue).
+   ========================================================================== */
+
+:root {
+  --ink: #241b35;
+  --ink-soft: #5e5571;
+  --ink-faint: #8a8299;
+  --dusk: #eeebf3;
+  --dusk-deep: #dcd6e6;
+  --panel: #f7f5fa;
+  --paper: #ffffff;
+  --line: #d9d3e3;
+  --silk: #a79fbd;
+  --primary: #3d2b5f;
+  --primary-hover: #2e2049;
+  --on-primary: #ffffff;
+  --focus: #7b5cf0;
+
+  /* catch colors as RGB triplets so we can vary the alpha */
+  --c-spelling: 201 42 82;
+  --c-grammar: 196 122 0;
+  --c-style: 42 115 152;
+
+  --font-ui: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-doc: "Literata", Georgia, "Times New Roman", serif;
+
+  --topbar-h: 64px;
+  --radius-s: 6px;
+  --radius-m: 10px;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ink: #ece8f4;
+    --ink-soft: #b7aecb;
+    --ink-faint: #8f86a3;
+    --dusk: #1c1627;
+    --dusk-deep: #130f1c;
+    --panel: #221b30;
+    --paper: #fbfaf7;
+    --line: #3a3150;
+    --silk: #9c93b6;
+    --primary: #b9a4ef;
+    --primary-hover: #cbbaf7;
+    --on-primary: #1a1325;
+    --focus: #b9a4ef;
+    --c-spelling: 236 84 122;
+    --c-grammar: 233 165 40;
+    --c-style: 92 170 214;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ink: #ece8f4;
+  --ink-soft: #b7aecb;
+  --ink-faint: #8f86a3;
+  --dusk: #1c1627;
+  --dusk-deep: #130f1c;
+  --panel: #221b30;
+  --paper: #fbfaf7;
+  --line: #3a3150;
+  --silk: #9c93b6;
+  --primary: #b9a4ef;
+  --primary-hover: #cbbaf7;
+  --on-primary: #1a1325;
+  --focus: #b9a4ef;
+  --c-spelling: 236 84 122;
+  --c-grammar: 233 165 40;
+  --c-style: 92 170 214;
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  background: var(--dusk);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select, textarea { font: inherit; color: inherit; }
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+[hidden] { display: none !important; }
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 38px; padding: 0 14px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-s);
+  background: var(--paper);
+  color: #241b35;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color .15s, border-color .15s;
+}
+.btn:hover:not(:disabled) { border-color: var(--silk); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn-primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-primary);
+}
+.btn-primary:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
+.btn-wide { width: 100%; }
+
+.text-btn {
+  background: none; border: 0; padding: 4px 0; cursor: pointer;
+  color: var(--primary); font-weight: 700; text-decoration: underline;
+  text-underline-offset: 3px; text-decoration-thickness: 1.5px;
+}
+
+/* ---------- Top bar ---------- */
+.topbar {
+  position: relative; z-index: 20;
+  flex: none;
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  min-height: var(--topbar-h);
+  padding: 10px 20px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+}
+.brand {
+  display: inline-flex; align-items: center; gap: 10px;
+  color: var(--ink); text-decoration: none;
+  font-weight: 700; font-size: 19px; letter-spacing: -0.01em;
+}
+.brand-mark { width: 30px; height: 30px; color: var(--ink); }
+.version {
+  align-self: flex-start; margin-top: 2px;
+  padding: 1px 6px; border-radius: 999px;
+  border: 1px solid var(--line);
+  font-size: 11px; font-weight: 700; color: var(--ink-soft); letter-spacing: .02em;
+}
+.run { display: flex; gap: 8px; flex-wrap: wrap; }
+.run .btn-primary { min-width: 132px; }
+
+.speed { display: flex; align-items: center; gap: 10px; }
+.speed-label { font-weight: 700; font-size: 14px; }
+.speed input { width: 150px; }
+.speed output { min-width: 56px; font-size: 14px; color: var(--ink-soft); }
+
+.status {
+  margin: 0 0 0 auto;
+  color: var(--ink-soft);
+  font-size: 14px;
+  max-width: 44ch;
+  text-align: right;
+}
+
+input[type="range"] { accent-color: var(--primary); }
+
+/* ---------- Layout ---------- */
+.layout {
+  display: grid;
+  grid-template-columns: 290px minmax(0, 1fr) 340px;
+  flex: 1;
+  min-height: 0;
+}
+.panel {
+  background: var(--panel);
+  overflow-y: auto;
+}
+.panel-settings { border-right: 1px solid var(--line); padding: 8px 20px 28px; }
+.panel-caught { border-left: 1px solid var(--line); display: flex; flex-direction: column; overflow: hidden; }
+
+.group { padding: 18px 0 20px; border-bottom: 1px solid var(--line); }
+.group:last-child { border-bottom: 0; }
+.group h2, .caught-head h2 {
+  margin: 0 0 12px;
+  font-size: 17px; font-weight: 700; letter-spacing: -0.005em;
+}
+
+/* ---------- Documents panel ---------- */
+.dropzone {
+  display: block; position: relative;
+  padding: 16px;
+  border: 1.5px dashed var(--silk);
+  border-radius: var(--radius-m);
+  background: var(--dusk);
+  cursor: pointer;
+}
+.dropzone:hover { border-color: var(--primary); }
+.dropzone:focus-within { outline: 3px solid var(--focus); outline-offset: 2px; }
+/* The real file input stays in the page (so the label, keyboard and screen readers can all
+   open it) but is visually hidden; the whole dropzone is its label. */
+.file-input {
+  position: absolute; width: 1px; height: 1px; margin: 0; padding: 0;
+  overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; opacity: 0;
+}
+.dropzone-title { display: block; font-weight: 700; color: var(--primary); }
+.dropzone-hint { display: block; margin-top: 2px; font-size: 13px; color: var(--ink-soft); }
+
+.paste-toggle { display: block; margin-top: 10px; }
+.paste-box { display: grid; gap: 8px; margin-top: 8px; }
+.paste-box textarea { font-family: var(--font-doc); font-size: 15px; line-height: 1.5; min-height: 140px; }
+.doc-list { list-style: none; margin: 12px 0 8px; padding: 0; }
+.doc-item {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
+}
+.doc-item:last-child { border-bottom: 0; }
+.doc-ext {
+  width: 40px; padding: 3px 0; text-align: center;
+  border-radius: 4px; background: var(--dusk-deep);
+  font-size: 12px; font-weight: 700; color: var(--ink-soft);
+}
+.doc-info { min-width: 0; }
+.doc-name { display: block; font-weight: 700; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.doc-state { display: block; font-size: 13px; color: var(--ink-soft); }
+.doc-state.is-bad { color: rgb(var(--c-spelling)); }
+.icon-btn {
+  width: 30px; height: 30px; border: 0; border-radius: 50%;
+  background: transparent; cursor: pointer;
+  font-size: 20px; line-height: 1; color: var(--ink-soft);
+}
+.icon-btn:hover { background: var(--dusk-deep); color: var(--ink); }
+
+/* ---------- Settings ---------- */
+.field { margin: 0 0 14px; border: 0; padding: 0; min-width: 0; }
+.field > label, .field > legend { display: block; font-weight: 700; font-size: 14px; margin-bottom: 4px; padding: 0; }
+.range-row { display: flex; align-items: center; gap: 10px; }
+.range-row input { flex: 1; min-width: 0; }
+.range-row output { min-width: 54px; text-align: right; font-size: 14px; color: var(--ink-soft); }
+
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.swatch { position: relative; }
+.swatch input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.swatch span {
+  display: block; width: 30px; height: 30px; border-radius: 50%;
+  background: var(--sw);
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.25);
+  border: 2px solid transparent;
+  outline: 2px solid transparent; outline-offset: 2px;
+}
+.swatch input:checked + span { outline-color: var(--ink); }
+.swatch input:focus-visible + span { outline: 3px solid var(--focus); }
+.swatch-custom span {
+  background: conic-gradient(#c92a52, #c47a00, #2f5d3a, #2a7398, #3d2b5f, #c92a52);
+}
+.swatch-custom input[type="color"] { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; border: 0; padding: 0; cursor: pointer; }
+
+.toggles { display: grid; gap: 8px; }
+.toggle { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; cursor: pointer; }
+.toggle input { margin: 3px 0 0; width: 16px; height: 16px; accent-color: var(--primary); flex: none; }
+
+.engines { display: grid; gap: 8px; }
+.field.engines > .engine {
+  display: flex; gap: 10px; align-items: flex-start;
+  margin: 0;
+  font-weight: 400;
+  padding: 10px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-m);
+  cursor: pointer;
+}
+.field.engines > .engine:has(input:checked) { border-color: var(--primary); background: var(--dusk); }
+.engine input { margin: 3px 0 0; accent-color: var(--primary); flex: none; }
+.engine b { display: block; font-size: 14px; }
+.engine small { display: block; font-size: 13px; color: var(--ink-soft); line-height: 1.4; }
+
+select, textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-s);
+  background: var(--paper);
+  color: #241b35;
+}
+textarea { resize: vertical; font-size: 14px; }
+
+.note { margin: 0 0 12px; font-size: 13px; color: var(--ink-soft); }
+.credit { margin: 14px 0 0; font-size: 12.5px; color: var(--ink-soft); }
+.credit a { color: var(--primary); font-weight: 700; }
+
+/* ---------- Viewer and pages ---------- */
+.viewer {
+  position: relative;
+  overflow: auto;
+  background: var(--dusk-deep);
+  scrollbar-gutter: stable;
+}
+.pages {
+  position: relative;
+  min-height: 100%;
+  padding: 28px 28px 120px;
+}
+
+.doc { margin: 0 auto 8px; max-width: 780px; }
+.doc + .doc { margin-top: 44px; }
+.doc-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
+  margin: 0 0 12px; padding: 0 2px;
+}
+.doc-title { margin: 0; font-size: 16px; font-weight: 700; overflow-wrap: anywhere; }
+.doc-meta { margin: 0; font-size: 13px; color: var(--ink-soft); white-space: nowrap; }
+.doc-failed {
+  padding: 24px; border-radius: var(--radius-m); background: var(--panel);
+  color: var(--ink-soft); font-size: 14px;
+}
+
+.page {
+  position: relative;
+  margin: 0 0 30px;
+  padding: 60px 72px 34px;
+  background: var(--paper);
+  color: #241b35;
+  border-radius: 3px;
+  box-shadow: 0 1px 2px rgba(36, 27, 53, .12), 0 14px 32px -20px rgba(36, 27, 53, .5);
+}
+.page-body p {
+  margin: 0 0 1.05em;
+  font-family: var(--font-doc);
+  font-size: 17px;
+  line-height: 1.78;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  hyphens: none;
+}
+.page-body p:last-child { margin-bottom: 0; }
+.page-body .no-text { font-family: var(--font-ui); font-style: italic; color: #8a8299; }
+.page-foot {
+  margin-top: 30px; text-align: center;
+  font-size: 12.5px; color: #8a8299;
+}
+.page.is-checking .page-foot::after { content: " (checking…)"; }
+
+/* Mistakes stay invisible until the spider reaches them */
+mark.err { background: transparent; color: inherit; border-radius: 3px; }
+mark.err.caught {
+  --c: var(--c-spelling);
+  background: rgb(var(--c) / .11);
+  box-shadow: 0 0 0 2px rgb(var(--c));
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  cursor: pointer;
+}
+mark.err.cat-grammar { --c: var(--c-grammar); }
+mark.err.cat-style { --c: var(--c-style); }
+mark.err.caught.lasso { animation: lasso .55s cubic-bezier(.2, .9, .3, 1.2); }
+mark.err.caught.flash { animation: flash 1.2s ease-out; }
+
+@keyframes lasso {
+  0% { box-shadow: 0 0 0 18px rgb(var(--c) / 0); background: rgb(var(--c) / 0); }
+  60% { box-shadow: 0 0 0 1px rgb(var(--c) / 1); }
+  100% { box-shadow: 0 0 0 2px rgb(var(--c) / 1); background: rgb(var(--c) / .11); }
+}
+@keyframes flash {
+  0%, 40% { background: rgb(var(--c) / .45); box-shadow: 0 0 0 5px rgb(var(--c) / .55); }
+  100% { background: rgb(var(--c) / .11); box-shadow: 0 0 0 2px rgb(var(--c)); }
+}
+
+/* Hidden kinds of mistakes */
+.pages.hide-spelling mark.err.cat-spelling,
+.pages.hide-grammar mark.err.cat-grammar,
+.pages.hide-style mark.err.cat-style { background: transparent; box-shadow: none; animation: none; cursor: auto; }
+.caught-list.hide-spelling .ci.cat-spelling,
+.caught-list.hide-grammar .ci.cat-grammar,
+.caught-list.hide-style .ci.cat-style { display: none; }
+
+/* ---------- Spider layer ---------- */
+.spider {
+  position: absolute; left: 0; top: 0;
+  z-index: 6;
+  pointer-events: none;
+  overflow: visible;
+  will-change: transform;
+}
+.spider-legs { opacity: .92; }
+
+/* The little ring that pops where a foot lands on a mistake */
+.foot-burst {
+  --c: var(--c-spelling);
+  position: absolute; left: 0; top: 0;
+  z-index: 5;
+  width: 30px; height: 30px; margin: -15px 0 0 -15px;
+  border-radius: 50%;
+  border: 2px solid rgb(var(--c));
+  pointer-events: none;
+  animation: burst .65s ease-out forwards;
+}
+.foot-burst.cat-grammar { --c: var(--c-grammar); }
+.foot-burst.cat-style { --c: var(--c-style); }
+@keyframes burst {
+  0% { transform: scale(.2); opacity: 1; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+.silk {
+  position: absolute; left: 0; top: 0;
+  z-index: 5;
+  height: 1.2px;
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, rgba(167, 159, 189, .2), rgba(167, 159, 189, .85));
+  pointer-events: none;
+  display: none;
+}
+.bubble {
+  position: absolute; left: 0; top: 0;
+  z-index: 7;
+  padding: 6px 11px;
+  border-radius: 12px;
+  background: #241b35;
+  color: #fff;
+  font-size: 13px; font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.bubble::after {
+  content: ""; position: absolute; left: 50%; bottom: -5px;
+  width: 10px; height: 10px; margin-left: -5px;
+  background: inherit; transform: rotate(45deg);
+}
+
+/* ---------- Empty state ---------- */
+.empty {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 0 0 40px;
+  text-align: center;
+}
+.empty-art {
+  position: relative;
+  width: 200px; height: 250px;
+  margin: -28px auto 8px;
+}
+.empty-thread {
+  position: absolute; left: 50%; top: 0;
+  width: 1.5px; height: 90px; margin-left: -.75px;
+  background: var(--silk);
+  transform-origin: 50% 0;
+}
+.empty-art .spider { filter: drop-shadow(0 8px 6px rgba(25, 15, 40, .25)); }
+/* On a dark background, give the welcome spider a soft glow so its dark legs still show. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .empty-art .spider { filter: drop-shadow(0 0 1.5px rgba(236, 232, 244, .75)) drop-shadow(0 0 6px rgba(185, 164, 239, .35)); }
+}
+:root[data-theme="dark"] .empty-art .spider { filter: drop-shadow(0 0 1.5px rgba(236, 232, 244, .75)) drop-shadow(0 0 6px rgba(185, 164, 239, .35)); }
+.empty-title {
+  margin: 0 0 10px;
+  font-family: var(--font-doc);
+  font-weight: 600;
+  font-size: clamp(26px, 3.4vw, 36px);
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+}
+.empty-text { margin: 0 auto 22px; max-width: 46ch; color: var(--ink-soft); font-size: 16px; }
+.empty-actions { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+
+/* ---------- Caught panel ---------- */
+.caught-head { padding: 18px 20px 12px; border-bottom: 1px solid var(--line); }
+.caught-head h2 { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.caught-count { font-size: 28px; line-height: 1; font-variant-numeric: tabular-nums; }
+.caught-of { font-size: 14px; font-weight: 400; color: var(--ink-soft); }
+.filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 9px 4px 8px;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  font-size: 13px; cursor: pointer;
+}
+.chip i { width: 10px; height: 10px; border-radius: 50%; background: rgb(var(--c)); }
+.chip b { font-variant-numeric: tabular-nums; }
+.chip[data-cat="spelling"] { --c: var(--c-spelling); }
+.chip[data-cat="grammar"] { --c: var(--c-grammar); }
+.chip[data-cat="style"] { --c: var(--c-style); }
+.chip-off { display: none; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+.chip[aria-pressed="false"] { opacity: .7; border-style: dashed; }
+.chip[aria-pressed="false"] i { background: transparent; box-shadow: inset 0 0 0 1.5px rgb(var(--c)); }
+.chip[aria-pressed="false"] .chip-name { text-decoration: line-through; }
+.chip[aria-pressed="false"] b { display: none; }
+.chip[aria-pressed="false"] .chip-off { display: inline; }
+.filter-note {
+  margin: 10px 0 0; padding: 8px 10px;
+  border-radius: var(--radius-s);
+  background: rgb(var(--c-grammar) / .14);
+  font-size: 13px; line-height: 1.4;
+}
+
+.caught-scroll { flex: 1; overflow-y: auto; padding: 4px 0 12px; }
+.caught-empty { margin: 16px 20px; color: var(--ink-soft); font-size: 14px; }
+.caught-list { list-style: none; margin: 0; padding: 0; }
+.ci-group { padding: 0; }
+.ci-doc {
+  position: sticky; top: 0; z-index: 1;
+  margin: 0; padding: 10px 20px 6px;
+  background: var(--panel);
+  font-size: 13px; font-weight: 700; color: var(--ink-soft);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ci-items { list-style: none; margin: 0; padding: 0; }
+.ci { --c: var(--c-spelling); }
+.ci.cat-grammar { --c: var(--c-grammar); }
+.ci.cat-style { --c: var(--c-style); }
+.ci-btn {
+  display: block; width: 100%;
+  padding: 9px 20px 10px 17px;
+  border: 0; border-left: 3px solid rgb(var(--c));
+  background: transparent;
+  text-align: left; cursor: pointer;
+}
+.ci-btn:hover { background: var(--dusk); }
+.ci.is-active .ci-btn { background: rgb(var(--c) / .12); }
+.ci.is-new .ci-btn { animation: arrive .6s ease-out; }
+@keyframes arrive { from { background: rgb(var(--c) / .22); } to { background: transparent; } }
+.ci-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.ci-word { font-family: var(--font-doc); font-weight: 600; font-size: 15px; overflow-wrap: anywhere; }
+.ci-where { flex: none; font-size: 12px; color: var(--ink-faint); }
+.ci-msg { display: block; margin-top: 1px; font-size: 13px; color: var(--ink-soft); line-height: 1.4; }
+.ci-fix { display: block; margin-top: 3px; font-size: 13px; font-weight: 700; color: rgb(var(--c)); }
+.caught-foot { padding: 12px 20px 16px; border-top: 1px solid var(--line); }
+
+/* ---------- Overlays ---------- */
+.drop-overlay {
+  position: fixed; inset: 0; z-index: 50;
+  display: grid; place-items: center;
+  background: rgba(36, 27, 53, .55);
+  pointer-events: none;
+}
+.drop-overlay p {
+  margin: 0; padding: 22px 30px;
+  border: 2px dashed #fff; border-radius: 16px;
+  color: #fff; font-size: 20px; font-weight: 700;
+}
+.toast {
+  position: fixed; left: 50%; bottom: 22px; z-index: 60;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: min(560px, calc(100vw - 32px));
+  padding: 12px 16px;
+  border-radius: var(--radius-m);
+  background: #241b35; color: #fff;
+  font-size: 14px;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, .5);
+}
+
+/* ---------- Smaller screens ---------- */
+@media (max-width: 1180px) {
+  body { display: block; height: auto; }
+  .layout { display: flex; flex-direction: column; height: auto; }
+  .viewer { order: 1; height: 72vh; height: 72dvh; }
+  .panel-caught { order: 2; border-left: 0; border-top: 1px solid var(--line); max-height: 60vh; }
+  .panel-settings { order: 3; border-right: 0; border-top: 1px solid var(--line); }
+  .status { flex-basis: 100%; margin: 0; text-align: left; max-width: none; }
+}
+@media (max-width: 640px) {
+  .topbar { padding: 10px 16px; gap: 10px 14px; }
+  .run { width: 100%; }
+  .run .btn { flex: 1; padding: 0 8px; }
+  .run .btn-primary { min-width: 0; }
+  .speed { width: 100%; }
+  .speed input { flex: 1; width: auto; }
+  .pages { padding: 16px 12px 100px; }
+  .page { padding: 32px 22px 24px; }
+  .page-body p { font-size: 16px; line-height: 1.72; }
+  .panel-settings { padding: 8px 16px 24px; }
+  .caught-head, .caught-foot { padding-left: 16px; padding-right: 16px; }
+  .ci-btn { padding-left: 13px; padding-right: 16px; }
+  .ci-doc { padding-left: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  mark.err.caught.lasso, mark.err.caught.flash, .ci.is-new .ci-btn { animation: none; }
+}
+
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="Spell Spider home">
+      <svg class="brand-mark" viewBox="-50 -50 100 100" aria-hidden="true">
+        <g stroke="currentColor" stroke-width="5" stroke-linecap="round" fill="none">
+          <path d="M-8 -6 L-26 -26 L-36 -14M8 -6 L26 -26 L36 -14M-9 0 L-30 -6 L-42 4M9 0 L30 -6 L42 4M-9 6 L-30 14 L-40 28M9 6 L30 14 L40 28M-7 12 L-22 30 L-26 44M7 12 L22 30 L26 44"/>
+        </g>
+        <ellipse cx="0" cy="14" rx="14" ry="17" fill="currentColor"/>
+        <ellipse cx="0" cy="-8" rx="11" ry="10" fill="currentColor"/>
+        <circle cx="-4.5" cy="-11" r="3.6" fill="var(--paper)"/>
+        <circle cx="4.5" cy="-11" r="3.6" fill="var(--paper)"/>
+      </svg>
+      <span>Spell Spider</span>
+      <span id="version" class="version"></span>
+    </a>
+
+    <div class="run" role="group" aria-label="Walk controls">
+      <button id="btnRun" class="btn btn-primary" type="button" disabled>Start walking</button>
+      <button id="btnSkip" class="btn" type="button" disabled>Skip page</button>
+      <button id="btnAll" class="btn" type="button" disabled>Find all now</button>
+    </div>
+
+    <label class="speed" for="speed">
+      <span class="speed-label">Speed</span>
+      <input id="speed" type="range" min="1" max="10" step="1" value="4" aria-describedby="speedOut">
+      <output id="speedOut" for="speed">Stroll</output>
+    </label>
+
+    <p id="status" class="status" role="status" aria-live="polite">Add documents to begin.</p>
+  </header>
+
+  <main class="layout">
+    <aside class="panel panel-settings" aria-label="Documents and settings">
+      <section class="group">
+        <h2>Documents</h2>
+        <label class="dropzone">
+          <input id="fileInput" class="file-input" type="file" multiple
+                 accept=".txt,.text,.md,.markdown,.pdf,.docx,.rtf,.html,.htm,.csv,.log,text/plain,text/markdown,text/html,text/rtf,application/rtf,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+          <span class="dropzone-title">Add documents</span>
+          <span class="dropzone-hint">Text, PDF, Word, RTF, HTML or Markdown. Pick several at once, or drop them anywhere on the page.</span>
+        </label>
+        <button id="btnPaste" class="text-btn paste-toggle" type="button" aria-expanded="false" aria-controls="pasteBox">Or paste text instead</button>
+        <div id="pasteBox" class="paste-box" hidden>
+          <label class="sr-only" for="pasteText">Text to check</label>
+          <textarea id="pasteText" rows="7" placeholder="Paste or type the text you want the spider to check."></textarea>
+          <button id="btnPasteAdd" class="btn btn-primary btn-wide" type="button">Check this text</button>
+        </div>
+        <ul id="docList" class="doc-list" aria-label="Added documents"></ul>
+        <button id="btnSample" class="text-btn" type="button">Try a sample document</button>
+      </section>
+
+      <section class="group">
+        <h2>Spider</h2>
+        <div class="field">
+          <label for="size">Body size</label>
+          <div class="range-row">
+            <input id="size" type="range" min="0.6" max="1.8" step="0.1" value="1">
+            <output id="sizeOut" for="size">100%</output>
+          </div>
+        </div>
+        <fieldset class="field">
+          <legend>Color</legend>
+          <div id="colors" class="swatches"></div>
+        </fieldset>
+        <div class="toggles">
+          <label class="toggle"><input id="follow" type="checkbox" checked> <span>Follow the spider as it walks</span></label>
+          <label class="toggle"><input id="silkToggle" type="checkbox" checked> <span>Show its silk thread</span></label>
+          <label class="toggle"><input id="sound" type="checkbox"> <span>Play a sound on each catch</span></label>
+        </div>
+      </section>
+
+      <section class="group">
+        <h2>Checker</h2>
+        <fieldset class="field engines">
+          <legend class="sr-only">How to check</legend>
+          <label class="engine">
+            <input type="radio" name="engine" value="languagetool" checked>
+            <span><b>Online</b><small>Best grammar checking. The built-in checker runs on everything, and your text is also sent to LanguageTool for extra grammar checks.</small></span>
+          </label>
+          <label class="engine">
+            <input type="radio" name="engine" value="builtin">
+            <span><b>Private</b><small>Only the built-in checker. Your text never leaves this browser. Catches fewer grammar mistakes.</small></span>
+          </label>
+        </fieldset>
+        <div class="field" id="langRow">
+          <label for="language">Language</label>
+          <select id="language">
+            <option value="en-US">English (US)</option>
+            <option value="en-GB">English (UK)</option>
+            <option value="en-CA">English (Canada)</option>
+            <option value="en-AU">English (Australia)</option>
+            <option value="auto">Detect automatically</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="ignore">Words to ignore</label>
+          <textarea id="ignore" rows="3" spellcheck="false" placeholder="Names, game terms, slang… one per line or separated by commas"></textarea>
+        </div>
+        <p id="engineNote" class="note" hidden>This applies to documents you add from now on. Re-check to use it on the ones already here.</p>
+        <button id="btnRecheck" class="btn btn-wide" type="button" disabled>Re-check all documents</button>
+        <p class="credit">Online grammar checking by <a href="https://languagetool.org" target="_blank">LanguageTool</a>. Their <a href="https://languagetool.org/legal/privacy" target="_blank">privacy policy</a> explains how text is handled.</p>
+      </section>
+    </aside>
+
+    <section id="viewer" class="viewer" aria-label="Documents">
+      <div id="pages" class="pages">
+        <div id="empty" class="empty">
+          <div class="empty-art" id="emptyArt" aria-hidden="true"><span class="empty-thread"></span></div>
+          <h1 class="empty-title">Give the spider something to read</h1>
+          <p class="empty-text">Add text, PDF or Word files. The spider walks straight down the middle of every page and steps on each spelling and grammar mistake with its legs, without ever stopping.</p>
+          <div class="empty-actions">
+            <label class="btn btn-primary" for="fileInput">Choose files</label>
+            <button id="emptyPaste" class="btn" type="button">Paste text</button>
+            <button id="emptySample" class="btn" type="button">Try a sample</button>
+          </div>
+        </div>
+        <div id="silk" class="silk" aria-hidden="true"></div>
+        <div id="bubble" class="bubble" hidden></div>
+      </div>
+    </section>
+
+    <aside class="panel panel-caught" aria-label="Mistakes caught">
+      <div class="caught-head">
+        <h2>Caught <span id="caughtCount" class="caught-count">0</span> <span id="caughtOf" class="caught-of"></span></h2>
+        <div class="filters" role="group" aria-label="Kinds of mistakes to catch">
+          <button class="chip" type="button" data-cat="spelling" aria-pressed="true"><i aria-hidden="true"></i><span class="chip-name">Spelling</span> <b id="nSpelling">0</b><span class="chip-off">off</span></button>
+          <button class="chip" type="button" data-cat="grammar" aria-pressed="true"><i aria-hidden="true"></i><span class="chip-name">Grammar</span> <b id="nGrammar">0</b><span class="chip-off">off</span></button>
+          <button class="chip" type="button" data-cat="style" aria-pressed="true"><i aria-hidden="true"></i><span class="chip-name">Style</span> <b id="nStyle">0</b><span class="chip-off">off</span></button>
+        </div>
+        <p id="filterNote" class="filter-note" role="status" hidden></p>
+      </div>
+      <div id="caughtScroll" class="caught-scroll">
+        <p id="caughtEmpty" class="caught-empty">Mistakes show up here as the spider catches them. Select one to jump to it.</p>
+        <ol id="caughtList" class="caught-list"></ol>
+      </div>
+      <div class="caught-foot">
+        <button id="btnReport" class="btn btn-wide" type="button" disabled>Download report (.csv)</button>
+      </div>
+    </aside>
+  </main>
+
+  <div id="dropOverlay" class="drop-overlay" hidden><p>Drop to add documents</p></div>
+  <div id="toast" class="toast" role="alert" hidden></div>
+
+  <script>
+/* ---- js/checker.js ---- */
+/* ==========================================================================
+   Spell Spider — checking engines
+   Two engines share one shape: check(text) -> Promise<Match[]>
+   Online mode runs both: LanguageTool first, plus everything the built-in checker
+   finds that LanguageTool didn't (LanguageTool gives up on text with lots of mistakes).
+   A Match is { offset, length, message, replacements[], category, ruleId }
+   category is one of: "spelling" | "grammar" | "style"
+   ========================================================================== */
+(function () {
+  "use strict";
+
+  // Libraries are bundled in lib/ so everything works offline and when index.html is
+  // opened straight from disk. The CDN copies are only a backup.
+  const TYPO_SOURCES = ["lib/typo.js", "https://cdn.jsdelivr.net/npm/typo-js@1.4.0/typo.js"];
+  const DICT_SCRIPT = "lib/en_US.js";
+  const DICT_CDN = "https://cdn.jsdelivr.net/npm/typo-js@1.4.0/dictionaries/en_US/en_US";
+  const LT_URL = "https://api.languagetool.org/v2/check";
+  const LT_TIMEOUT_MS = 30000;
+
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  /* Load a classic script once. A failed attempt is removed so it can be tried again. */
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const existing = document.querySelector(`script[data-src="${src}"]`);
+      if (existing && existing.dataset.loaded) return resolve();
+      if (existing) {
+        existing.addEventListener("load", () => resolve());
+        existing.addEventListener("error", () => reject(new Error("Could not load " + src)));
+        return;
+      }
+      const s = document.createElement("script");
+      s.src = src;
+      s.dataset.src = src;
+      s.async = true;
+      s.onload = () => { s.dataset.loaded = "1"; resolve(); };
+      s.onerror = () => { s.remove(); reject(new Error("Could not load " + src)); };
+      document.head.appendChild(s);
+    });
+  }
+
+  /* Try each source in turn until ready() says the library is there. */
+  async function loadFirst(sources, ready) {
+    if (ready()) return;
+    let lastErr = null;
+    for (const src of sources) {
+      try {
+        await loadScript(src);
+        if (ready()) return;
+      } catch (e) { lastErr = e; }
+    }
+    throw lastErr || new Error("Could not load " + sources[0]);
+  }
+
+  /* Keep the capital letter of the original word when suggesting a fix. */
+  function matchCase(original, replacement) {
+    if (!original || !replacement) return replacement;
+    if (original.length > 1 && original === original.toUpperCase()) return replacement.toUpperCase();
+    if (original[0] === original[0].toUpperCase() && original[0] !== original[0].toLowerCase()) {
+      return replacement[0].toUpperCase() + replacement.slice(1);
+    }
+    return replacement;
+  }
+
+  /* Remove overlapping matches. Earlier start wins; on a tie, higher priority, then longer. */
+  function dedupe(matches) {
+    const sorted = matches.slice().sort((a, b) =>
+      a.offset - b.offset || (b.priority || 0) - (a.priority || 0) || b.length - a.length);
+    const out = [];
+    let end = -1;
+    for (const m of sorted) {
+      if (m.length <= 0) continue;
+      if (m.offset < end) continue;
+      out.push(m);
+      end = m.offset + m.length;
+    }
+    return out;
+  }
+
+  /* Add matches from a second checker only where the first one found nothing. */
+  function mergeExtra(primary, extra) {
+    const taken = primary.map((m) => [m.offset, m.offset + m.length]);
+    const out = primary.slice();
+    for (const m of extra) {
+      const a = m.offset, b = m.offset + m.length;
+      if (taken.some(([x, y]) => a < y && b > x)) continue;
+      out.push(m);
+      taken.push([a, b]);
+    }
+    if (primary.language) out.language = primary.language;
+    return out;
+  }
+
+  /* ------------------------------------------------------------------------
+     LanguageTool (online). Free public API limits, per IP:
+     20 requests/min (peak), 75 KB of text/min, 20 KB per request.
+     We stay well under them and wait politely when we get close.
+     ------------------------------------------------------------------------ */
+  const LanguageTool = {
+    name: "LanguageTool",
+    maxRequestBytes: 14000,
+    _log: [],
+    onWait: null,
+
+    _bytes(text) {
+      return new TextEncoder().encode(text).length;
+    },
+
+    async _waitTurn(bytes) {
+      let announced = false;
+      for (;;) {
+        const now = Date.now();
+        this._log = this._log.filter((x) => now - x.t < 60000);
+        const used = this._log.reduce((a, x) => a + x.bytes, 0);
+        const last = this._log.length ? this._log[this._log.length - 1].t : 0;
+        const okCount = this._log.length < 12;
+        const okBytes = used + bytes <= 68000;
+        const okGap = now - last >= 2500;
+        if (okCount && okBytes && okGap) {
+          this._log.push({ t: now, bytes });
+          if (announced && this.onWait) this.onWait(false);
+          return;
+        }
+        let wait = 400;
+        if (!okGap) wait = Math.max(wait, 2500 - (now - last));
+        if ((!okCount || !okBytes) && this._log.length) {
+          wait = Math.max(wait, 60000 - (now - this._log[0].t) + 50);
+          if (!announced && this.onWait) { this.onWait(true); announced = true; }
+        }
+        await sleep(Math.min(wait, 5000));
+      }
+    },
+
+    _category(rule) {
+      if (!rule) return "grammar";
+      const issue = (rule.issueType || "").toLowerCase();
+      const cat = ((rule.category && rule.category.id) || "").toUpperCase();
+      if (issue === "misspelling" || cat === "TYPOS") return "spelling";
+      if (issue === "grammar") return "grammar";
+      if (["GRAMMAR", "CONFUSED_WORDS", "CASING", "PUNCTUATION", "SEMANTICS",
+           "COLLOCATIONS", "NONSTANDARD_PHRASES", "MISC", "COMPOUNDING"].includes(cat)) return "grammar";
+      return "style";
+    },
+
+    /* Throws an Error with .kind: "offline" (no connection), "busy" (rate limit) or
+       "refused" (LanguageTool turned the text down, for example because it has too many mistakes). */
+    async check(text, opts) {
+      opts = opts || {};
+      const bytes = this._bytes(text);
+      const fail = (kind, message) => { const e = new Error(message); e.kind = kind; return e; };
+      for (let attempt = 0; attempt < 2; attempt++) {
+        await this._waitTurn(bytes);
+        const body = new URLSearchParams({ text, language: opts.language || "en-US" });
+        const ctrl = typeof AbortController === "function" ? new AbortController() : null;
+        const timer = ctrl ? setTimeout(() => ctrl.abort(), LT_TIMEOUT_MS) : 0;
+        let res, data;
+        try {
+          res = await fetch(LT_URL, {
+            method: "POST", body, headers: { Accept: "application/json" },
+            signal: ctrl ? ctrl.signal : undefined,
+          });
+        } catch (err) {
+          clearTimeout(timer);
+          throw fail("offline", "Could not reach LanguageTool.");
+        }
+        try {
+          if (res.status === 429) {
+            if (attempt === 0) {
+              if (this.onWait) this.onWait(true);
+              await sleep(12000);
+              continue;
+            }
+            throw fail("busy", "LanguageTool is busy right now.");
+          }
+          if (!res.ok) {
+            let why = "";
+            try { why = await res.text(); } catch (e) { /* ignore */ }
+            throw fail("refused", /too many errors/i.test(why)
+              ? "LanguageTool gave up on a part with lots of mistakes."
+              : "LanguageTool answered with error " + res.status + ".");
+          }
+          data = await res.json();
+        } catch (err) {
+          if (err && err.kind) throw err;
+          throw fail("offline", "Could not reach LanguageTool.");
+        } finally {
+          clearTimeout(timer);
+          if (this.onWait) this.onWait(false);
+        }
+        const out = (data.matches || []).map((m) => ({
+          offset: m.offset,
+          length: m.length,
+          message: m.message || (m.rule && m.rule.description) || "Possible problem.",
+          replacements: (m.replacements || []).slice(0, 5).map((r) => r.value).filter(Boolean),
+          category: this._category(m.rule),
+          ruleId: m.rule ? m.rule.id : "",
+          priority: 3,
+        }));
+        const lang = data.language && (data.language.code || (data.language.detectedLanguage && data.language.detectedLanguage.code));
+        out.language = lang || opts.language || "en-US";
+        out.incomplete = !!(data.warnings && data.warnings.incompleteResults);
+        return out;
+      }
+      throw fail("busy", "LanguageTool is busy right now.");
+    },
+  };
+
+  /* ------------------------------------------------------------------------
+     Built-in engine: Hunspell en_US dictionary (via Typo.js) for spelling,
+     plus a set of hand-written grammar and punctuation rules.
+     Everything runs in the browser; no text leaves the page.
+     ------------------------------------------------------------------------ */
+  const EXTRA_WORDS = new Set((
+    "ok okay emoji emojis selfie selfies blog blogs vlog vlogs livestream livestreams " +
+    "wifi smartphone smartphones online gameplay esports gif gifs app apps website websites " +
+    "email emails username usernames login logout signup inbox hashtag hashtags podcast podcasts " +
+    "youtube youtuber tiktok instagram roblox minecraft fortnite discord github google googled " +
+    "screenshot screenshots playlist playlists unfollow multiplayer singleplayer npc npcs " +
+    "gamepad touchscreen spreadsheet spreadsheets dropdown checkbox checkboxes laptop laptops " +
+    "texted texting lol omg btw fyi diy gameplay coworker coworkers healthcare " +
+    "leaderboard leaderboards pickaxe pickaxes respawn respawns respawned respawning robux gamepass gamepasses " +
+    "playtest playtests playtested playtesting playtester playtesters minigame minigames hotbar hitbox hitboxes " +
+    "noob noobs devlog devlogs dev devs afk lobbies checkpoint checkpoints tutorial tutorials " +
+    "smartwatch earbuds livestreamed livestreaming streamer streamers unboxing"
+  ).split(/\s+/));
+
+  const COMMON_FIXES = {
+    teh: "the", adn: "and", recieve: "receive", recieved: "received", beleive: "believe",
+    beleived: "believed", definately: "definitely", definatly: "definitely", seperate: "separate",
+    seperately: "separately", occured: "occurred", occurence: "occurrence", untill: "until",
+    wich: "which", becuase: "because", beacuse: "because", becasue: "because", alot: "a lot",
+    thier: "their", freind: "friend", freinds: "friends", wierd: "weird", truely: "truly",
+    tommorow: "tomorrow", tommorrow: "tomorrow", goverment: "government", enviroment: "environment",
+    neccessary: "necessary", necesary: "necessary", accomodate: "accommodate", acheive: "achieve",
+    arguement: "argument", begining: "beginning", calender: "calendar", cemetary: "cemetery",
+    concious: "conscious", embarass: "embarrass", existance: "existence", foriegn: "foreign",
+    grammer: "grammar", happend: "happened", independant: "independent", knowlege: "knowledge",
+    libary: "library", noticable: "noticeable", occassion: "occasion", posession: "possession",
+    publically: "publicly", realy: "really", recomend: "recommend", refered: "referred",
+    responsability: "responsibility", rythm: "rhythm", sucess: "success", succesful: "successful",
+    suprise: "surprise", tounge: "tongue", writting: "writing", wether: "whether",
+    youre: "you're", dont: "don't", doesnt: "doesn't", didnt: "didn't", cant: "can't",
+    wont: "won't", isnt: "isn't", wasnt: "wasn't", im: "I'm", ive: "I've", thats: "that's",
+    whats: "what's", theyre: "they're", couldnt: "couldn't", wouldnt: "wouldn't", shouldnt: "shouldn't",
+    shelfs: "shelves", knifes: "knives", wifes: "wives", lifes: "lives", wolfs: "wolves", childs: "children",
+    womans: "women's", gonna: "going to",
+  };
+
+  const ABBREVIATIONS = new Set((
+    "mr mrs ms dr prof sr jr st vs etc e.g i.e a.m p.m approx dept est fig figs inc ltd co corp " +
+    "jan feb mar apr jun jul aug sep sept oct nov dec mon tue tues wed thu thur thurs fri sat sun " +
+    "no nos vol vols ch chap pg pp p ed eds al cf ca min max mt ft lb lbs oz in yr yrs hr hrs u.s"
+  ).split(/\s+/));
+
+  const PARTICIPLES = {
+    went: "gone", ate: "eaten", wrote: "written", took: "taken", drove: "driven", rode: "ridden",
+    spoke: "spoken", broke: "broken", chose: "chosen", froze: "frozen", stole: "stolen",
+    swam: "swum", drank: "drunk", sang: "sung", began: "begun", ran: "run", gave: "given",
+    forgot: "forgotten", knew: "known", grew: "grown", threw: "thrown", flew: "flown",
+    shook: "shaken", wore: "worn", tore: "torn", hid: "hidden", bit: "bitten", fell: "fallen",
+  };
+
+  const COMPARATIVES = (
+    "more less better worse rather greater fewer larger smaller higher lower faster slower bigger " +
+    "older younger easier harder stronger weaker longer shorter darker lighter colder hotter warmer " +
+    "cooler louder quieter taller cheaper richer poorer smarter nicer happier sadder scarier prettier " +
+    "uglier safer wider deeper heavier quicker brighter cleaner closer farther newer simpler tougher " +
+    "weirder funnier crazier busier earlier sooner bolder calmer kinder meaner softer sweeter thicker thinner"
+  ).split(" ");
+  const SUPERLATIVES = COMPARATIVES
+    .filter((w) => /er$/.test(w) && !["more", "less", "rather", "better", "worse", "fewer"].includes(w))
+    .map((w) => w.replace(/er$/, "est"))
+    .concat(["best", "worst"]);
+  const COMPARE_RE = COMPARATIVES.join("|");
+  const DOUBLE_RE = COMPARATIVES.filter((w) => !["more", "less", "rather", "fewer"].includes(w))
+    .concat(SUPERLATIVES).join("|");
+
+  const AUX_BEFORE_HAVE = new Set(("does did do will would can could should might must may shall to let " +
+    "make makes made help helps helped watch saw see hear heard had doesn't didn't won't wouldn't can't " +
+    "couldn't shouldn't don't").split(" "));
+
+  const BE_FORMS = new Set("am is are was were be been being i'm you're we're they're he's she's it's not".split(" "));
+
+  /* Edit distance where swapping two neighbouring letters counts as one edit.
+     Gives up early once the distance must be bigger than max. */
+  function osaDistance(a, b, max) {
+    const n = a.length, m = b.length;
+    if (Math.abs(n - m) > max) return max + 1;
+    let prev2 = null, prev = new Array(m + 1), cur = new Array(m + 1);
+    for (let j = 0; j <= m; j++) prev[j] = j;
+    for (let i = 1; i <= n; i++) {
+      cur[0] = i;
+      let rowMin = cur[0];
+      for (let j = 1; j <= m; j++) {
+        const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+        let v = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost);
+        if (prev2 && i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) v = Math.min(v, prev2[j - 2] + 1);
+        cur[j] = v;
+        if (v < rowMin) rowMin = v;
+      }
+      if (rowMin > max) return max + 1;
+      const tmp = prev2 || new Array(m + 1);
+      prev2 = prev; prev = cur; cur = tmp;
+    }
+    return prev[m];
+  }
+
+  function prevWord(text, index) {
+    const m = text.slice(0, index).match(/([A-Za-z'’]+)\s*$/);
+    return m ? m[1].toLowerCase().replace(/’/g, "'") : "";
+  }
+
+  /* Each rule returns matches for one block of text. */
+  const RULES = [
+    { // a + vowel sound
+      id: "A_AN", category: "grammar",
+      re: /\b([Aa])\s+([A-Za-z][\w'’-]*)/g,
+      test(m, text) {
+        const w = m[2];
+        if (w.length < 2 || w === w.toUpperCase()) return null;
+        if (m[1] === "A") {
+          // A capital "A" mid-sentence is usually a label or grade ("Plan A is"), not the article.
+          const before = text.slice(0, m.index).replace(/["'“‘(\[\s]+$/, "");
+          if (before.length && !/[.!?:]$/.test(before)) return null;
+        }
+        const lw = w.toLowerCase();
+        const needsAn =
+          (/^[aeio]/.test(lw) && !/^(one|once|eu|ewe)/.test(lw)) ||
+          (/^u/.test(lw) && !/^u(ni(?![mnd])|nan|s[eua]|t[ieo]|r[aeiou]|b[ie]|kr|vu|ku|ga)/.test(lw)) ||
+          /^(hour|honest|honor|honour|heir)/.test(lw);
+        if (!needsAn) return null;
+        return { offset: m.index, length: m[1].length,
+          message: `Use “an” before “${w}”, because it starts with a vowel sound.`,
+          replacements: [matchCase(m[1], "an")] };
+      },
+    },
+    { // an + consonant sound
+      id: "AN_A", category: "grammar",
+      re: /\b([Aa]n)\s+([A-Za-z][\w'’-]*)/g,
+      test(m) {
+        const w = m[2];
+        if (w.length < 2 || w === w.toUpperCase()) return null;
+        const lw = w.toLowerCase();
+        if (/^(hour|honest|honor|honour|heir|herb|histor)/.test(lw)) return null;
+        const consonant =
+          (/^[bcdfgjklmnpqrstvwyz]/.test(lw)) ||
+          /^(uni(?![mnd])|unan|us[eua]|ut[ieo]|ur[aeiou]|eu|ewe|one\b|once)/.test(lw);
+        if (!consonant) return null;
+        return { offset: m.index, length: m[1].length,
+          message: `Use “a” before “${w}”, because it starts with a consonant sound.`,
+          replacements: [matchCase(m[1], "a")] };
+      },
+    },
+    { // repeated word
+      id: "REPEATED_WORD", category: "grammar",
+      re: /\b([A-Za-z]+)\s+(\1)\b/gi,
+      test(m) {
+        const pair = (m[1] + " " + m[2]).toLowerCase();
+        if (["had had", "that that", "bye bye", "no no", "so so"].includes(pair)) return null;
+        return { offset: m.index, length: m[0].length,
+          message: `The word “${m[1]}” is repeated.`, replacements: [m[1]] };
+      },
+    },
+    { // lowercase letter starting a sentence
+      id: "SENTENCE_CAPITAL", category: "grammar",
+      re: /([.!?])(["'”’)\]]?)\s+([a-z][a-z'’]*)/g,
+      test(m, text) {
+        const before = text.slice(0, m.index + 1);
+        const token = (before.match(/(\S+)$/) || ["", ""])[1];
+        const bare = token.toLowerCase().replace(/[.!?]+$/, "").replace(/^[("'“‘[]+/, "");
+        if (m[1] === "." && (text[m.index - 1] === "." || /\.\.$/.test(token))) return null; // ellipsis
+        if (ABBREVIATIONS.has(bare) || ABBREVIATIONS.has(bare.replace(/\./g, ""))) return null;
+        if (/^[a-z]$/i.test(bare) || /^([a-z]\.)+[a-z]?$/i.test(bare)) return null;
+        if (/\d$/.test(bare) || /[\/@]/.test(token)) return null;
+        const word = m[3];
+        const start = m.index + m[0].length - word.length;
+        return { offset: start, length: word.length,
+          message: "Start a new sentence with a capital letter.",
+          replacements: [word[0].toUpperCase() + word.slice(1)] };
+      },
+    },
+    { // lowercase "i" used as a pronoun
+      id: "LOWERCASE_I", category: "grammar",
+      re: /(^|[\s"“(])(i)(?=$|[\s,;:!?'’"”)]|\.(?![a-z]))/g,
+      test(m, text) {
+        const start = m.index + m[1].length;
+        if (m[1] === "(" && text[start + 1] === ")") return null;
+        return { offset: start, length: 1, message: "Write the word “I” as a capital letter.", replacements: ["I"] };
+      },
+    },
+    { // phrase confusions
+      id: "COULD_OF", category: "grammar",
+      re: /\b(could|would|should|must|might|may|could\s*n['’]t|would\s*n['’]t|should\s*n['’]t)\s+(of)\b/gi,
+      test(m) {
+        const start = m.index + m[0].length - m[2].length;
+        return { offset: start, length: 2, message: `Use “have” after “${m[1]}”, not “of”.`,
+          replacements: [matchCase(m[2], "have")] };
+      },
+    },
+    {
+      id: "THAN_THEN", category: "grammar",
+      re: new RegExp(`\\b(${COMPARE_RE})\\s+(then)\\b`, "gi"),
+      test(m) {
+        const start = m.index + m[0].length - 4;
+        return { offset: start, length: 4, message: "Use “than” when comparing things.",
+          replacements: [matchCase(m[2], "than")] };
+      },
+    },
+    {
+      id: "THEIR_IS", category: "grammar",
+      re: /\b(their)\s+(is|are|was|were|will be|has been|have been)\b/gi,
+      test(m) {
+        return { offset: m.index, length: m[1].length,
+          message: "“Their” means belonging to them. Here you probably mean “there”.",
+          replacements: [matchCase(m[1], "there")] };
+      },
+    },
+    {
+      id: "THERE_OWN", category: "grammar",
+      re: /\b(there|they['’]re)\s+(own|car|cars|house|houses|book|books|phone|phones|dog|dogs|cat|cats|parents|friends|names?|family|teacher|homework|room|rooms|tools|drills|stuff|kids|children|money|homes|games|lives|lunch|ideas|team|school|jobs|clothes|bikes|items|toys|mom|dad|mother|father|brother|sister|way|turn|best|favorite|favourite)\b/gi,
+      test(m, text) {
+        if (/^there$/i.test(m[1]) && /\b(over|in|out|up|down|from|go|went|get|got)\s*$/i.test(text.slice(0, m.index))) return null;
+        return { offset: m.index, length: m[1].length,
+          message: `Use “their” to show something belongs to them.`,
+          replacements: [matchCase(m[1], "their")] };
+      },
+    },
+    {
+      id: "YOUR_YOURE", category: "grammar",
+      re: /\b(your)\s+(welcome|not|going\s+to|so|too|the|a|an|gonna|probably|really)\b/gi,
+      test(m) {
+        return { offset: m.index, length: m[1].length,
+          message: "“Your” shows ownership. Here you probably mean “you're” (you are).",
+          replacements: [matchCase(m[1], "you're")] };
+      },
+    },
+    {
+      id: "YOUR_DOING", category: "grammar",
+      re: /\b(your)\s+(doing|going|making|getting|coming|trying|being|saying|talking|looking|playing|having|leaving|kidding|joking|lying|acting|asking|thinking|telling|working|gonna|always|never|very|such|right\s+about|correct|wrong)\b/gi,
+      test(m) {
+        return { offset: m.index, length: m[1].length,
+          message: "“Your” shows ownership. Here you probably mean “you're” (you are).",
+          replacements: [matchCase(m[1], "you're")] };
+      },
+    },
+    {
+      id: "WERE_WHERE", category: "grammar",
+      re: /\b(know|knew|knows|wonder|wondered|wondering|remember|remembered|forgot|ask|asked|tell|told|that['’]s|thats|is|place|spot|somewhere|anywhere|everywhere|nowhere|bug)\s+(were)\s+(the|a|an|my|your|his|her|our|their|its|anything|everything|something|nothing|i|you|he|she|it|we|they|this|that)\b/gi,
+      test(m) {
+        const at = m[0].toLowerCase().lastIndexOf("were");
+        return { offset: m.index + at, length: 4,
+          message: "“Were” is a form of “be”. For a place, use “where”.",
+          replacements: [matchCase(m[2], "where")] };
+      },
+    },
+    {
+      id: "ITS_ITS", category: "grammar",
+      re: /\b(its)\s+(a|an|the|not|been|going|so|just|okay|ok|gonna|hard\s+to|easy\s+to|time\s+to)\b/gi,
+      test(m) {
+        return { offset: m.index, length: m[1].length,
+          message: "“Its” shows ownership. Here you probably mean “it's” (it is).",
+          replacements: [matchCase(m[1], "it's")] };
+      },
+    },
+    {
+      id: "WHOS_WHOSE", category: "grammar",
+      re: /\b(who['’]s)\s+(car|house|book|phone|turn|idea|fault|job|bag|dog|cat|name|side|team)\b/gi,
+      test(m) {
+        return { offset: m.index, length: m[1].length,
+          message: "Use “whose” to ask who something belongs to.",
+          replacements: [matchCase(m[1], "whose")] };
+      },
+    },
+    {
+      id: "HE_DONT", category: "grammar",
+      re: /\b(he|she|it)\s+(don['’]t)\b/gi,
+      test(m) {
+        const start = m.index + m[0].length - m[2].length;
+        return { offset: start, length: m[2].length, message: `Use “doesn't” with “${m[1]}”.`,
+          replacements: ["doesn't"] };
+      },
+    },
+    {
+      id: "THEY_WAS", category: "grammar",
+      re: /\b(they|we|you)\s+(was)\b/gi,
+      test(m) {
+        const start = m.index + m[0].length - 3;
+        return { offset: start, length: 3, message: `Use “were” with “${m[1]}”.`, replacements: ["were"] };
+      },
+    },
+    {
+      id: "HE_HAVE", category: "grammar",
+      re: /\b(he|she|it)\s+(have)\b/gi,
+      test(m, text) {
+        if (AUX_BEFORE_HAVE.has(prevWord(text, m.index))) return null;
+        const start = m.index + m[0].length - 4;
+        return { offset: start, length: 4, message: `Use “has” with “${m[1]}”.`, replacements: ["has"] };
+      },
+    },
+    {
+      id: "I_SEEN", category: "grammar",
+      re: /\b(I|we|they|you)\s+(seen)\b/gi,
+      test(m) {
+        const start = m.index + m[0].length - 4;
+        return { offset: start, length: 4, message: "Use “saw”, or “have seen”.", replacements: ["saw", "have seen"] };
+      },
+    },
+    {
+      id: "HAVE_WENT", category: "grammar",
+      re: /\b(have|has|had|having|'ve|’ve)\s+(went|ate|wrote|took|drove|rode|spoke|broke|chose|froze|stole|swam|drank|sang|began|ran|gave|forgot|knew|grew|threw|flew|shook|wore|tore|fell)\b/gi,
+      test(m) {
+        const verb = m[2].toLowerCase();
+        const start = m.index + m[0].length - m[2].length;
+        return { offset: start, length: m[2].length,
+          message: `After “${m[1].replace(/^['’]/, "")}”, use “${PARTICIPLES[verb]}” instead of “${m[2]}”.`,
+          replacements: [PARTICIPLES[verb]] };
+      },
+    },
+    {
+      id: "SUPPOSE_TO", category: "grammar",
+      re: /\b(suppose)\s+to\b/gi,
+      test(m, text) {
+        if (!BE_FORMS.has(prevWord(text, m.index))) return null;
+        return { offset: m.index, length: m[1].length, message: "Write “supposed to”.",
+          replacements: [matchCase(m[1], "supposed")] };
+      },
+    },
+    {
+      id: "LOOSE_LOSE", category: "grammar",
+      re: /\b(loose)\s+(weight|my|your|his|her|their|our|it|them|track|the\s+game|everything)\b/gi,
+      test(m) {
+        return { offset: m.index, length: m[1].length, message: "“Loose” means not tight. To misplace or fail to win is “lose”.",
+          replacements: [matchCase(m[1], "lose")] };
+      },
+    },
+    {
+      id: "AN_OTHER", category: "grammar",
+      re: /\b(an)\s+(other)\b/gi,
+      test(m) {
+        return { offset: m.index, length: m[0].length, message: "Write “another” as one word.",
+          replacements: [matchCase(m[1], "another")] };
+      },
+    },
+    {
+      id: "ALOT", category: "spelling",
+      re: /\b(alot)\b/gi,
+      test(m) {
+        return { offset: m.index, length: 4, message: "“A lot” is two words.", replacements: [matchCase(m[1], "a lot")] };
+      },
+    },
+    {
+      id: "IRREGARDLESS", category: "style",
+      re: /\b(irregardless)\b/gi,
+      test(m) {
+        return { offset: m.index, length: m[1].length, message: "Use “regardless” instead.",
+          replacements: [matchCase(m[1], "regardless")] };
+      },
+    },
+    {
+      id: "DOUBLE_COMPARATIVE", category: "grammar",
+      re: new RegExp(`\\b(more|most)\\s+(${DOUBLE_RE})\\b`, "gi"),
+      test(m) {
+        return { offset: m.index, length: m[0].length, message: `“${m[2]}” already compares, so drop “${m[1]}”.`,
+          replacements: [matchCase(m[1], m[2].toLowerCase())] };
+      },
+    },
+    {
+      id: "LESS_FEWER", category: "style",
+      re: /\b(less)\s+(people|students|cars|things|items|errors|mistakes|words|books|games|players|friends|times|days|hours|minutes|years|calories|options|choices)\b/gi,
+      test(m) {
+        return { offset: m.index, length: m[1].length, message: "Use “fewer” for things you can count.",
+          replacements: [matchCase(m[1], "fewer")] };
+      },
+    },
+    { // space before punctuation
+      id: "SPACE_BEFORE_PUNCT", category: "style",
+      re: /(\S)([ \t]+)([,.;:!?])(?=\s|$)/g,
+      test(m) {
+        if (m[3] === "." && /[.]/.test(m[1])) return null;
+        const start = m.index + 1;
+        return { offset: start, length: m[2].length + 1, message: "Remove the space before the punctuation mark.",
+          replacements: [m[3]] };
+      },
+    },
+    { // missing space after comma
+      id: "COMMA_SPACE", category: "style",
+      re: /([A-Za-z]),([A-Za-z])/g,
+      test(m) {
+        return { offset: m.index + 1, length: 2, message: "Add a space after the comma.",
+          replacements: [", " + m[2]] };
+      },
+    },
+    { // missing space after a sentence
+      id: "SENTENCE_SPACE", category: "style",
+      re: /([a-z]{2,}[.!?])([A-Z][a-z]+)/g,
+      test(m, text) {
+        const left = text.slice(Math.max(0, m.index - 30), m.index + m[0].length);
+        if (/[\/@]|www|https?|\.(com|org|net|io|js|py|html)/i.test(left)) return null;
+        return { offset: m.index + m[1].length - 1, length: 1 + m[2].length,
+          message: "Add a space between sentences.", replacements: [m[1].slice(-1) + " " + m[2]] };
+      },
+    },
+    { // double spaces between words
+      id: "DOUBLE_SPACE", category: "style",
+      re: /(\S)( {2,})(?=\S)/g,
+      test(m) {
+        return { offset: m.index + 1, length: m[2].length, message: "There is more than one space here.", replacements: [" "] };
+      },
+    },
+    { // repeated punctuation (no lookbehind, so older Safari can load this file)
+      id: "DOUBLE_PUNCT", category: "style",
+      re: /,{2,}|;{2,}|\.{2,}|([!?])\1{2,}/g,
+      test(m) {
+        const t = m[0];
+        if (/^\.{3,}$/.test(t)) return null; // an ellipsis is fine
+        const fix = t[0] === "." ? "." : t[0];
+        return { offset: m.index, length: t.length, message: "This punctuation mark is repeated.",
+          replacements: t[0] === "." ? [".", "…"] : [fix] };
+      },
+    },
+  ];
+
+  const Builtin = {
+    name: "Built-in",
+    typo: null,
+    _loading: null,
+    dictionaryFailed: false,
+
+    load() {
+      if (this.typo) return Promise.resolve(this.typo);
+      if (!this._loading) {
+        const giveUp = sleep(20000).then(() => { throw new Error("The dictionary took too long to load."); });
+        giveUp.catch(() => {}); // only matters if it wins the race below
+        this._loading = (async () => {
+          try {
+            const fetchDictionary = async () => {
+              await loadFirst(TYPO_SOURCES, () => typeof window.Typo === "function");
+              try {
+                await loadFirst([DICT_SCRIPT], () => !!window.SPELL_SPIDER_DICT);
+                return [window.SPELL_SPIDER_DICT.aff, window.SPELL_SPIDER_DICT.dic];
+              } catch (e) {
+                return Promise.all([
+                  fetch(DICT_CDN + ".aff").then((r) => { if (!r.ok) throw new Error(); return r.text(); }),
+                  fetch(DICT_CDN + ".dic").then((r) => { if (!r.ok) throw new Error(); return r.text(); }),
+                ]);
+              }
+            };
+            const [aff, dic] = await Promise.race([fetchDictionary(), giveUp]);
+            await sleep(30); // let the page paint the "loading dictionary" message first
+            this.typo = new window.Typo("en_US", aff, dic);
+            window.SPELL_SPIDER_DICT = null; // the parsed copy is all we need now
+          } catch (e) {
+            this.dictionaryFailed = true;
+            this.typo = null;
+          }
+          return this.typo;
+        })();
+      }
+      return this._loading;
+    },
+
+    known(word) {
+      const w = word.replace(/’/g, "'");
+      const lw = w.toLowerCase();
+      if (EXTRA_WORDS.has(lw)) return true;
+      if (this.typo.check(w)) return true;
+      if (/'s$/i.test(w) && this.typo.check(w.slice(0, -2))) return true;
+      if (/s'$/i.test(w) && this.typo.check(w.slice(0, -1))) return true;
+      return false;
+    },
+
+    suggest(word) {
+      const lw = word.toLowerCase().replace(/’/g, "'");
+      if (!this._cache) this._cache = new Map();
+      if (this._cache.has(lw)) return this._cache.get(lw).map((s) => matchCase(word, s));
+      const out = [];
+      const add = (s) => { if (s && !out.includes(s)) out.push(s); };
+      if (COMMON_FIXES[lw]) add(COMMON_FIXES[lw]);
+      if (/[^aeiou]ys$/.test(lw) && this.typo.check(lw.slice(0, -2) + "ies")) add(lw.slice(0, -2) + "ies"); // countrys -> countries
+      // Try every one-letter change, and rank them by how people actually mistype:
+      // a missing or extra double letter, a wrong vowel or two swapped letters come first.
+      const letters = "abcdefghijklmnopqrstuvwxyz";
+      const vowel = (c) => "aeiouy".includes(c);
+      const n = lw.length;
+      const cands = new Map();
+      const tryWord = (c, cost) => {
+        if (!c || c === lw) return;
+        if (cands.has(c) && cands.get(c) <= cost) return;
+        if (this.typo.check(c)) cands.set(c, cost);
+      };
+      for (let i = 0; i < n - 1; i++) tryWord(lw.slice(0, i) + lw[i + 1] + lw[i] + lw.slice(i + 2), 1);
+      for (let i = 0; i < n; i++) {
+        for (const ch of letters) {
+          if (ch === lw[i]) continue;
+          const cost = (vowel(ch) && vowel(lw[i]) ? 0.8 : 1.25) + (i === 0 ? 0.5 : 0);
+          tryWord(lw.slice(0, i) + ch + lw.slice(i + 1), cost);
+        }
+      }
+      for (let i = 0; i < n; i++) {
+        const doubled = lw[i] === lw[i - 1] || lw[i] === lw[i + 1];
+        tryWord(lw.slice(0, i) + lw.slice(i + 1), (doubled ? 0.6 : 1.1) + (i === 0 ? 0.5 : 0));
+      }
+      for (let i = 0; i <= n; i++) {
+        for (const ch of letters) {
+          const doubling = ch === lw[i - 1] || ch === lw[i];
+          tryWord(lw.slice(0, i) + ch + lw.slice(i), (doubling ? 0.6 : 1.1) + (i === 0 ? 0.5 : 0));
+        }
+      }
+      Array.from(cands.entries()).sort((a, b) => a[1] - b[1]).forEach(([c]) => add(c));
+      if (out.length < 2 && performance.now() < (this._budgetUntil || Infinity)) {
+        for (const c of this.nearby(lw)) add(c);
+      }
+      if (out.length < 2) {
+        for (let i = 1; i < n; i++) {
+          const a = lw.slice(0, i), b = lw.slice(i);
+          if ((a.length > 1 || a === "a" || a === "i") && b.length > 1 && this.typo.check(a) && this.typo.check(b)) add(a + " " + b);
+        }
+      }
+      const best = out.slice(0, 4);
+      this._cache.set(lw, best);
+      return best.map((s) => matchCase(word, s));
+    },
+
+    /* Words two small edits away (e.g. "schedual" -> "schedule"). Uses an index of
+       dictionary words grouped by first letter so it stays fast. */
+    nearby(word) {
+      if (!this._index) {
+        this._index = new Map();
+        for (const w of this.typo.dictionaryTable.keys()) {
+          if (w.length < 3 || /[^a-z']/.test(w)) continue;
+          const k = w[0];
+          if (!this._index.has(k)) this._index.set(k, []);
+          this._index.get(k).push(w);
+        }
+      }
+      const n = word.length;
+      if (n < 4 || n > 18) return [];
+      const keys = new Set([word[0], word[1]]); // allow the first two letters to be swapped
+      const found = [];
+      for (const k of keys) {
+        for (const w of this._index.get(k) || []) {
+          if (Math.abs(w.length - n) > 2) continue;
+          const d = osaDistance(word, w, 2);
+          if (d <= 2) found.push({ w, d, sameStart: w[0] === word[0] && w[1] === word[1] });
+        }
+      }
+      found.sort((a, b) => a.d - b.d || b.sameStart - a.sameStart || Math.abs(a.w.length - n) - Math.abs(b.w.length - n));
+      return found.slice(0, 3).map((f) => f.w);
+    },
+
+    spelling(text) {
+      const matches = [];
+      if (!this.typo) return matches;
+      const skip = [];
+      for (const m of text.matchAll(/\b(?:https?:\/\/|www\.)\S+|\S+@\S+\.\S+|\b\S+\.(?:com|org|net|io|edu|gov)\b\S*/gi)) {
+        skip.push([m.index, m.index + m[0].length]);
+      }
+      const inSkip = (i) => skip.some(([a, b]) => i >= a && i < b);
+      const wordRe = /[A-Za-zÀ-ɏ]+(?:['’][A-Za-z]+)*/g;
+      for (const m of text.matchAll(wordRe)) {
+        const w = m[0];
+        const i = m.index;
+        if (w.length < 2) continue;
+        if (/\d/.test(text[i - 1] || "") || /\d/.test(text[i + w.length] || "")) continue;
+        if (/[A-Z]/.test(w.slice(1))) continue; // acronyms, CamelCase, McNames
+        if (inSkip(i)) continue;
+        if (/^[A-Z]/.test(w)) {
+          // Capitalized words in the middle of a sentence are usually names. Skip them.
+          const before = text.slice(0, i).replace(/["'“‘(\[\s]+$/, "");
+          const sentenceStart = before.length === 0 || /[.!?:]$/.test(before) || /\n\s*$/.test(text.slice(0, i));
+          // Mid-sentence capitals are usually names, unless it's a well-known misspelling.
+          if (!sentenceStart && !COMMON_FIXES[w.toLowerCase()]) continue;
+        }
+        if (this.known(w)) continue;
+        const capital = w[0].toUpperCase() + w.slice(1);
+        if (capital !== w && this.typo.checkExact(capital)) {
+          // A real word that needs a capital letter: days, months, places, names
+          matches.push({ offset: i, length: w.length, word: w,
+            message: `Write “${capital}” with a capital letter.`, replacements: [capital],
+            category: "spelling", ruleId: "NEEDS_CAPITAL", priority: 1 });
+          continue;
+        }
+        matches.push({ offset: i, length: w.length, word: w,
+          message: `“${w}” may be misspelled.`, replacements: null, category: "spelling",
+          ruleId: "SPELLING", priority: 1 });
+      }
+      return matches;
+    },
+
+    grammar(text) {
+      const out = [];
+      for (const rule of RULES) {
+        rule.re.lastIndex = 0;
+        for (const m of text.matchAll(rule.re)) {
+          const r = rule.test(m, text);
+          if (r) out.push(Object.assign({ category: rule.category, ruleId: rule.id, priority: 2 }, r));
+        }
+      }
+      return out;
+    },
+
+    async check(text) {
+      await this.load();
+      const all = dedupe(this.grammar(text).concat(this.spelling(text)));
+      this._budgetUntil = performance.now() + 1200; // keep slow, fancy suggestions from freezing the page
+      for (const m of all) {
+        if (m.replacements === null) {
+          try { m.replacements = this.suggest(m.word); } catch (e) { m.replacements = []; }
+        }
+      }
+      return all;
+    },
+  };
+
+  window.SpiderCheck = { LanguageTool, Builtin, dedupe, mergeExtra, loadScript, loadFirst };
+})();
+
+</script>
+  <script>
+/* ---- js/extract.js ---- */
+/* ==========================================================================
+   Spell Spider — turning uploaded files into pages of paragraphs
+   Supports plain text (.txt .md .csv .log), .html, .rtf, .pdf (PDF.js) and .docx (mammoth.js)
+   Result: { kind, pages: [ { paragraphs: [string] } ] }
+   ========================================================================== */
+(function () {
+  "use strict";
+
+  // Bundled copies first (they work offline and from a double-clicked index.html), CDN as a backup.
+  const PDFJS = ["lib/pdf.min.js", "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/legacy/build/pdf.min.js"];
+  const PDFJS_WORKER = ["lib/pdf.worker.min.js", "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/legacy/build/pdf.worker.min.js"];
+  const MAMMOTH = ["lib/mammoth.browser.min.js", "https://cdn.jsdelivr.net/npm/mammoth@1.13.0/mammoth.browser.min.js"];
+
+  const TEXT_PAGE_CHARS = 2600; // how much plain text goes on one "page"
+
+  function kindOf(file) {
+    const name = (file.name || "").toLowerCase();
+    const type = file.type || "";
+    if (name.endsWith(".pdf") || type === "application/pdf") return "pdf";
+    if (name.endsWith(".docx") || type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") return "docx";
+    if (/\.(html?|xhtml)$/.test(name) || type === "text/html") return "html";
+    if (name.endsWith(".rtf") || /rtf/.test(type)) return "rtf";
+    if (/\.(txt|md|markdown|text|csv|log)$/.test(name) || type.startsWith("text/")) return "text";
+    if (!/\.[a-z0-9]{1,5}$/.test(name) && !type) return "text"; // a file with no extension: try it as text
+    return null;
+  }
+
+  function label(kind) {
+    return { pdf: ".pdf", docx: ".docx", html: ".html", rtf: ".rtf" }[kind] || ".txt";
+  }
+
+  /* Split one very long paragraph at sentence ends so a page never gets huge. */
+  function splitLong(para, max) {
+    if (para.length <= max) return [para];
+    const parts = [];
+    let rest = para;
+    while (rest.length > max) {
+      let cut = rest.lastIndexOf(". ", max);
+      if (cut < max * 0.5) cut = rest.lastIndexOf(" ", max);
+      if (cut < max * 0.3) cut = max;
+      parts.push(rest.slice(0, cut + 1).trimEnd());
+      rest = rest.slice(cut + 1).trimStart();
+    }
+    if (rest) parts.push(rest);
+    return parts;
+  }
+
+  function paginateText(text) {
+    const clean = text
+      .replace(/^\uFEFF/, "")
+      .replace(/\r\n?/g, "\n")
+      .replace(/[\u2028\u2029]/g, "\n")
+      .replace(/\u00A0/g, " ")
+      .replace(/\t/g, "    ")
+      .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "");
+    const paras = [];
+    for (const block of clean.split(/\n[ \t]*\n+/)) {
+      const p = block.replace(/^\n+|\s+$/g, "");
+      if (p.trim()) paras.push(...splitLong(p, TEXT_PAGE_CHARS));
+    }
+    const pages = [];
+    let cur = [], size = 0;
+    for (const p of paras) {
+      if (cur.length && size + p.length > TEXT_PAGE_CHARS) {
+        pages.push({ paragraphs: cur });
+        cur = []; size = 0;
+      }
+      cur.push(p);
+      size += p.length + 2;
+    }
+    if (cur.length) pages.push({ paragraphs: cur });
+    if (!pages.length) pages.push({ paragraphs: [] });
+    return pages;
+  }
+
+  /* Read text as UTF-8, or as Windows-1252 when it isn't valid UTF-8 (older Windows text files). */
+  async function decodeText(file) {
+    const buf = await file.arrayBuffer();
+    try {
+      return new TextDecoder("utf-8", { fatal: true }).decode(buf);
+    } catch (e) {
+      try { return new TextDecoder("windows-1252").decode(buf); } catch (e2) { return new TextDecoder().decode(buf); }
+    }
+  }
+
+  async function readText(file) {
+    return paginateText(await decodeText(file));
+  }
+
+  /* ---- HTML: keep the visible text, one paragraph per block ---- */
+  async function readHtml(file) {
+    const doc = new DOMParser().parseFromString(await decodeText(file), "text/html");
+    doc.querySelectorAll("script, style, noscript, template, svg, head").forEach((n) => n.remove());
+    const blocks = "p,div,li,h1,h2,h3,h4,h5,h6,blockquote,pre,tr,section,article,header,footer,td,th,dt,dd,figcaption";
+    doc.querySelectorAll(blocks).forEach((n) => { n.insertAdjacentText("beforebegin", "\n\n"); n.insertAdjacentText("afterend", "\n\n"); });
+    doc.querySelectorAll("br").forEach((n) => n.replaceWith("\n"));
+    const text = (doc.body ? doc.body.textContent : doc.documentElement.textContent) || "";
+    return paginateText(text.replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n"));
+  }
+
+  /* ---- RTF (WordPad, TextEdit): a small reader that keeps the text and drops the formatting ---- */
+  const RTF_SKIP = new Set(["fonttbl", "colortbl", "stylesheet", "info", "pict", "header", "footer", "headerl",
+    "headerr", "footerl", "footerr", "object", "themedata", "colorschememapping", "latentstyles", "datastore",
+    "xmlnstbl", "listtable", "listoverridetable", "rsidtbl", "generator", "mmathPr", "fldinst"]);
+  const CP1252 = { 128: "€", 130: "‚", 131: "ƒ", 132: "„", 133: "…", 134: "†", 135: "‡", 136: "ˆ", 137: "‰", 138: "Š",
+    139: "‹", 140: "Œ", 142: "Ž", 145: "‘", 146: "’", 147: "“", 148: "”", 149: "•", 150: "–", 151: "—", 152: "˜",
+    153: "™", 154: "š", 155: "›", 156: "œ", 158: "ž", 159: "Ÿ" };
+
+  function rtfToText(rtf) {
+    let out = "";
+    const stack = [];
+    let skip = false, uc = 1, skipChars = 0;
+    let i = 0;
+    const n = rtf.length;
+    const emit = (s) => {
+      if (skip) return;
+      if (skipChars > 0) { skipChars--; return; }
+      out += s;
+    };
+    while (i < n) {
+      const c = rtf[i];
+      if (c === "{") { stack.push({ skip, uc }); i++; continue; }
+      if (c === "}") { const st = stack.pop(); if (st) { skip = st.skip; uc = st.uc; } i++; continue; }
+      if (c === "\\") {
+        const next = rtf[i + 1];
+        if (next === "\\" || next === "{" || next === "}") { emit(next); i += 2; continue; }
+        if (next === "'") {
+          const code = parseInt(rtf.substr(i + 2, 2), 16);
+          if (!isNaN(code)) emit(CP1252[code] || String.fromCharCode(code));
+          i += 4; continue;
+        }
+        if (next === "*") { skip = true; i += 2; continue; }
+        if (next === "~") { emit(" "); i += 2; continue; }
+        if (next === "-" || next === "_") { if (next === "_") emit("-"); i += 2; continue; }
+        if (next === "\n" || next === "\r") { emit("\n"); i += 2; continue; }
+        const m = /^([a-zA-Z]+)(-?\d+)? ?/.exec(rtf.slice(i + 1, i + 40));
+        if (!m) { i += 2; continue; }
+        const word = m[1], arg = m[2] !== undefined ? parseInt(m[2], 10) : null;
+        i += 1 + m[0].length;
+        if (RTF_SKIP.has(word)) { skip = true; continue; }
+        switch (word) {
+          case "par": case "line": case "sect": case "row": emit("\n"); break;
+          case "page": emit("\n\n"); break;
+          case "tab": case "cell": emit("\t"); break;
+          case "emdash": emit("—"); break;
+          case "endash": emit("–"); break;
+          case "lquote": emit("‘"); break;
+          case "rquote": emit("’"); break;
+          case "ldblquote": emit("“"); break;
+          case "rdblquote": emit("”"); break;
+          case "bullet": emit("•"); break;
+          case "uc": uc = arg || 0; break;
+          case "u": {
+            let code = arg || 0;
+            if (code < 0) code += 65536;
+            emit(String.fromCharCode(code));
+            skipChars = uc;
+            break;
+          }
+          default: break;
+        }
+        continue;
+      }
+      if (c === "\r" || c === "\n") { i++; continue; }
+      emit(c);
+      i++;
+    }
+    // A single \par is a new paragraph in RTF, so turn line breaks into paragraph breaks.
+    return out.replace(/\t/g, " ").replace(/[ ]*\n[ ]*/g, "\n").replace(/\n+/g, "\n\n");
+  }
+
+  async function readRtf(file) {
+    const raw = await decodeText(file);
+    if (!/^\s*\{\\rtf/.test(raw)) return paginateText(raw);
+    return paginateText(rtfToText(raw));
+  }
+
+  /* ---- Word .docx ---- */
+  async function readDocx(file) {
+    await window.SpiderCheck.loadFirst(MAMMOTH, () => !!window.mammoth);
+    const result = await window.mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() });
+    return paginateText(result.value || "");
+  }
+
+  /* ---- PDF: rebuild lines and paragraphs from positioned text pieces ---- */
+  let pdfMainThread = false;
+
+  async function usePdfMainThread() {
+    // Web workers can't start from a file:// page in some browsers. Loading the worker
+    // code onto the page makes PDF.js run it here instead.
+    await window.SpiderCheck.loadFirst(PDFJS_WORKER, () => !!(window.pdfjsWorker && window.pdfjsWorker.WorkerMessageHandler));
+    pdfMainThread = true;
+  }
+
+  async function openPdf(lib, data) {
+    try {
+      return await lib.getDocument({ data: data.slice(0), isEvalSupported: false }).promise;
+    } catch (err) {
+      if (err && err.name === "PasswordException") throw new Error("this PDF is password-protected");
+      if (pdfMainThread) throw err;
+      await usePdfMainThread();
+      return await lib.getDocument({ data: data.slice(0), isEvalSupported: false }).promise;
+    }
+  }
+
+  async function readPdf(file, onProgress) {
+    await window.SpiderCheck.loadFirst(PDFJS, () => !!window.pdfjsLib);
+    const lib = window.pdfjsLib;
+    const local = !/^https?:/.test(location.protocol);
+    if (local && !pdfMainThread) {
+      try { await usePdfMainThread(); } catch (e) { /* try the worker anyway */ }
+    }
+    if (!lib.GlobalWorkerOptions.workerSrc) {
+      lib.GlobalWorkerOptions.workerSrc = new URL(PDFJS_WORKER[0], location.href).href;
+    }
+    const data = new Uint8Array(await file.arrayBuffer());
+    const pdf = await openPdf(lib, data);
+    const pages = [];
+    for (let p = 1; p <= pdf.numPages; p++) {
+      if (onProgress) onProgress(p, pdf.numPages);
+      const page = await pdf.getPage(p);
+      const content = await page.getTextContent();
+      pages.push({ paragraphs: pdfParagraphs(content.items) });
+      page.cleanup();
+    }
+    pdf.destroy();
+    return pages;
+  }
+
+  function pdfParagraphs(items) {
+    const lines = [];
+    let cur = null;
+    let lastEndX = null;
+    const pushLine = () => {
+      if (cur && cur.text.trim()) {
+        cur.text = cur.text.replace(/\s+/g, " ").trim();
+        lines.push(cur);
+      }
+      cur = null;
+      lastEndX = null;
+    };
+
+    for (const it of items) {
+      if (typeof it.str !== "string") continue;
+      const t = it.transform;
+      const x = t[4], y = t[5];
+      const size = Math.abs(t[3]) || Math.hypot(t[0], t[1]) || it.height || 10;
+      const str = it.str.normalize("NFKC");
+      if (cur && Math.abs(cur.y - y) > size * 0.45 && str.trim()) pushLine();
+      if (!cur) {
+        if (!str.trim()) { if (it.hasEOL) pushLine(); continue; }
+        cur = { y, size, left: x, right: x, text: "" };
+      }
+      if (lastEndX !== null && str && cur.text && !/\s$/.test(cur.text) && !/^\s/.test(str) &&
+          x - lastEndX > size * 0.12) {
+        cur.text += " ";
+      }
+      cur.text += str;
+      if (str.trim()) {
+        lastEndX = x + (it.width || 0);
+        cur.right = Math.max(cur.right, lastEndX);
+        cur.size = Math.max(cur.size, size);
+      }
+      if (it.hasEOL) pushLine();
+    }
+    pushLine();
+    if (!lines.length) return [];
+
+    const gaps = [];
+    for (let i = 1; i < lines.length; i++) {
+      const dy = lines[i - 1].y - lines[i].y;
+      if (dy > 0) gaps.push(dy);
+    }
+    gaps.sort((a, b) => a - b);
+    const typical = gaps.length ? gaps[Math.floor(gaps.length / 2)] : 14;
+    const maxRight = Math.max(...lines.map((l) => l.right));
+    const minLeft = Math.min(...lines.map((l) => l.left));
+    const width = Math.max(1, maxRight - minLeft);
+
+    const paras = [];
+    let para = lines[0].text;
+    for (let i = 1; i < lines.length; i++) {
+      const prev = lines[i - 1], line = lines[i];
+      const dy = prev.y - line.y;
+      const prevShort = prev.right < minLeft + width * 0.62;
+      const prevEnds = /[.!?:;"”)]$/.test(prev.text);
+      const newPara =
+        dy <= 0 || dy > typical * 1.45 ||
+        Math.abs(line.size - prev.size) > 1.5 ||
+        prevShort ||
+        (prevEnds && prev.right < minLeft + width * 0.85);
+      if (newPara) {
+        paras.push(para);
+        para = line.text;
+      } else if (/[A-Za-z]-$/.test(para) && /^[a-z]/.test(line.text)) {
+        para = para.slice(0, -1) + line.text; // re-join a word split by hyphenation
+      } else {
+        para += " " + line.text;
+      }
+    }
+    paras.push(para);
+    return paras.filter((p) => p.trim()).flatMap((p) => splitLong(p, 6000));
+  }
+
+  async function readFile(file, onProgress) {
+    const kind = kindOf(file);
+    if (!kind) throw new Error("This file type isn't supported. Use .txt, .md, .pdf, .docx, .rtf or .html.");
+    let pages;
+    if (kind === "pdf") pages = await readPdf(file, onProgress);
+    else if (kind === "docx") pages = await readDocx(file);
+    else if (kind === "html") pages = await readHtml(file);
+    else if (kind === "rtf") pages = await readRtf(file);
+    else pages = await readText(file);
+    return { kind, pages };
+  }
+
+  window.SpiderExtract = { readFile, kindOf, label, paginateText, rtfToText };
+})();
+
+</script>
+  <script>
+/* ---- js/spider.js ---- */
+/* ==========================================================================
+   Spell Spider — the spider itself
+   An SVG spider with eight long, jointed legs. The walker in app.js decides
+   where every foot is; this file shapes each leg (upper leg out from the body,
+   lower leg arching down) so the foot lands exactly there, even far out
+   across the page.
+   ========================================================================== */
+(function () {
+  "use strict";
+
+  const NS = "http://www.w3.org/2000/svg";
+  const DEG = Math.PI / 180;
+
+  // Where each leg joins the body, right side, front to back. The left side is mirrored.
+  // Units are SVG units: the body is drawn in a 100 x 100 box centered on 0,0, head toward -y.
+  const HIPS = [[5.2, -9.5], [6.6, -6.6], [6.6, -3.4], [5.6, -0.4]];
+
+  // Which way each upper leg points out of the body (degrees; 0 = straight out to the
+  // side, negative = toward the head), right side front to back.
+  const FEMUR_ANGLE = [-62, -22, 20, 58];
+
+  // Short legs for the little spider hanging on the welcome screen.
+  const HANG = [
+    { base: -58, bend: -26, femur: 15, tibia: 19 },
+    { base: -22, bend: -12, femur: 15, tibia: 17 },
+    { base: 16, bend: 12, femur: 14, tibia: 17 },
+    { base: 52, bend: 26, femur: 15, tibia: 19 },
+  ];
+
+  function el(name, attrs, parent) {
+    const node = document.createElementNS(NS, name);
+    for (const k in attrs) node.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(node);
+    return node;
+  }
+
+  function shade(hex, amount) {
+    const h = hex.replace("#", "");
+    const n = parseInt(h.length === 3 ? h.split("").map((c) => c + c).join("") : h, 16);
+    let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    const t = amount < 0 ? 0 : 255, p = Math.abs(amount);
+    r = Math.round((t - r) * p + r); g = Math.round((t - g) * p + g); b = Math.round((t - b) * p + b);
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+  }
+
+  /* Leg k: 0-3 are the right legs (front to back), 4-7 the left legs. */
+  function hip(k) {
+    const h = HIPS[k & 3];
+    return [k < 4 ? h[0] : -h[0], h[1]];
+  }
+
+  const f1 = (n) => n.toFixed(1);
+
+  class Spider {
+    constructor(options) {
+      options = options || {};
+      this.legPx = options.legPx || 3; // how thick the legs look on screen, in pixels
+      this.size = 1;
+      this.svg = el("svg", { viewBox: "-50 -50 100 100", class: "spider", "aria-hidden": "true", overflow: "visible" });
+      this.root = el("g", {}, this.svg);
+      this.legGroup = el("g", { class: "spider-legs", fill: "none", "stroke-linecap": "round", "stroke-linejoin": "round" }, this.root);
+      this.legs = [];
+      for (let k = 0; k < 8; k++) {
+        this.legs.push({
+          femur: el("path", {}, this.legGroup),
+          tibia: el("path", {}, this.legGroup),
+          foot: el("circle", { r: 1.5 }, this.legGroup),
+        });
+      }
+      // Pedipalps (the little feelers at the front)
+      this.palps = [
+        el("path", { fill: "none", "stroke-linecap": "round" }, this.root),
+        el("path", { fill: "none", "stroke-linecap": "round" }, this.root),
+      ];
+      const body = el("g", { class: "spider-body" }, this.root);
+      this.abdomen = el("ellipse", { cx: 0, cy: 12, rx: 11.5, ry: 14, stroke: "rgba(255,255,255,.7)", "stroke-width": 1.1 }, body);
+      this.marking = el("path", { d: "M-5 8 Q0 12 5 8 M-4 14 Q0 18 4 14 M-2.5 20 Q0 22.5 2.5 20", fill: "none", "stroke-width": 1.6, "stroke-linecap": "round" }, body);
+      this.shine = el("ellipse", { cx: -4, cy: 5, rx: 3.6, ry: 5.5, fill: "#fff", opacity: 0.16 }, body);
+      this.thorax = el("ellipse", { cx: 0, cy: -6, rx: 9, ry: 8.5, stroke: "rgba(255,255,255,.7)", "stroke-width": 1.1 }, body);
+      // Eyes: two big front eyes, two small side eyes
+      this.eyes = el("g", {}, body);
+      for (const sx of [-1, 1]) {
+        el("circle", { cx: sx * 6.6, cy: -9.4, r: 1.25, fill: "#fff", opacity: 0.85 }, this.eyes);
+        el("circle", { cx: sx * 3.4, cy: -11.2, r: 3.3, fill: "#fff" }, this.eyes);
+        el("circle", { cx: sx * 3.4, cy: -11.7, r: 2.1, fill: "#120c1d" }, this.eyes);
+        el("circle", { cx: sx * 3.4 - 0.8, cy: -12.6, r: 0.75, fill: "#fff" }, this.eyes);
+      }
+      this.setColor(options.color || "#2b2140");
+      this.setSize(options.size || 1);
+      this.hangPose(0, 0, 0);
+    }
+
+    static hip(k) { return hip(k); }
+
+    setColor(hex) {
+      this.color = hex;
+      const leg = shade(hex, -0.15);
+      for (const L of this.legs) {
+        L.femur.setAttribute("stroke", leg);
+        L.tibia.setAttribute("stroke", leg);
+        L.foot.setAttribute("fill", leg);
+      }
+      for (const p of this.palps) p.setAttribute("stroke", leg);
+      this.abdomen.setAttribute("fill", hex);
+      this.thorax.setAttribute("fill", shade(hex, 0.12));
+      this.marking.setAttribute("stroke", shade(hex, 0.45));
+    }
+
+    /* scale = screen pixels per SVG unit. Legs keep the same on-screen thickness at any size. */
+    setSize(scale) {
+      this.size = scale;
+      const px = Math.max(1, Math.round(100 * scale));
+      this.svg.setAttribute("width", px);
+      this.svg.setAttribute("height", px);
+      const femurW = Math.max(1.6, this.legPx * 1.25) / scale;
+      const tibiaW = Math.max(1.2, this.legPx * 0.8) / scale;
+      for (const L of this.legs) {
+        L.femur.setAttribute("stroke-width", femurW.toFixed(2));
+        L.tibia.setAttribute("stroke-width", tibiaW.toFixed(2));
+        L.foot.setAttribute("r", (Math.max(1.4, this.legPx * 0.62) / scale).toFixed(2));
+      }
+      for (const p of this.palps) p.setAttribute("stroke-width", 2.2);
+    }
+
+    /* Put the body at x,y (pixels inside its container), angle in degrees (0 = facing up, 180 = down). */
+    place(x, y, angle) {
+      const half = 50 * this.size;
+      this.svg.style.transform = `translate(${x - half}px, ${y - half}px)`;
+      this.root.setAttribute("transform", `rotate(${angle})`);
+    }
+
+    _drawLeg(k, hx, hy, kx, ky, fx, fy, cx, cy) {
+      const L = this.legs[k];
+      if (cx === undefined) { cx = (kx + fx) / 2; cy = (ky + fy) / 2; }
+      L.femur.setAttribute("d", `M${f1(hx)} ${f1(hy)}L${f1(kx)} ${f1(ky)}`);
+      L.tibia.setAttribute("d", `M${f1(kx)} ${f1(ky)}Q${f1(cx)} ${f1(cy)} ${f1(fx)} ${f1(fy)}`);
+      L.foot.setAttribute("cx", f1(fx));
+      L.foot.setAttribute("cy", f1(fy));
+    }
+
+    /* Draw every leg so its foot lands exactly on feet[k] (body units).
+       The upper leg (femur) sticks out from the body at the leg's own angle, turning a
+       little toward the foot; the lower leg arches from the knee down to the foot and
+       stretches as far as it needs to, so a foot can reach anywhere on the page.
+       rest[k] is the leg's relaxed reach; lift[k] (0..1) arches a leg that is mid-step. */
+    reach(feet, rest, lift) {
+      for (let k = 0; k < 8; k++) {
+        const [hx, hy] = hip(k);
+        const mx = k < 4 ? 1 : -1; // work in right-side terms, then mirror the left legs
+        const fx = feet[k][0], fy = feet[k][1];
+        const toFoot = Math.atan2(fy - hy, (fx - hx) * mx) / DEG;
+        const base = FEMUR_ANGLE[k & 3];
+        let delta = ((toFoot - base + 540) % 360) - 180;
+        delta = Math.max(-45, Math.min(45, delta));
+        const ang = (base + delta * 0.65) * DEG;
+        const fem = Math.max(9, rest[k] * 0.4);
+        const kx = hx + Math.cos(ang) * fem * mx, ky = hy + Math.sin(ang) * fem;
+        // The lower leg bows away from the body; a lifted leg bows more.
+        const tx = fx - kx, ty = fy - ky;
+        const tl = Math.hypot(tx, ty) || 1;
+        let nx = -ty / tl, ny = tx / tl;
+        const midx = (kx + fx) / 2, midy = (ky + fy) / 2;
+        if (nx * midx + ny * midy < 0) { nx = -nx; ny = -ny; }
+        const up = lift ? lift[k] || 0 : 0;
+        const bow = Math.min(tl * (0.08 + 0.14 * up), rest[k] * 0.35);
+        this._drawLeg(k, hx, hy, kx, ky, fx, fy, midx + nx * bow, midy + ny * bow);
+      }
+    }
+
+    /* A simple built-in leg animation, used for the small spider on the welcome screen. */
+    hangPose(phase, idle, stride) {
+      stride = stride === undefined ? 1 : stride;
+      for (let side = 0; side < 2; side++) {
+        const mirror = side === 0 ? 1 : -1;
+        for (let i = 0; i < 4; i++) {
+          const L = HANG[i];
+          const group = (i + side) % 2;
+          const p = phase + (group ? Math.PI : 0);
+          const swing = Math.sin(p) * 13 * stride + Math.sin(idle * 1.7 + i + side * 2) * 1.6;
+          const reach = 1 - Math.max(0, Math.cos(p)) * stride * 0.14;
+          const a1 = (L.base + swing) * DEG;
+          const a2 = (L.base + swing + L.bend) * DEG;
+          const ax = HIPS[i][0], ay = HIPS[i][1];
+          const kx = ax + Math.cos(a1) * L.femur, ky = ay + Math.sin(a1) * L.femur;
+          const fx = kx + Math.cos(a2) * L.tibia * reach, fy = ky + Math.sin(a2) * L.tibia * reach;
+          this._drawLeg(side * 4 + i, ax * mirror, ay, kx * mirror, ky, fx * mirror, fy);
+        }
+      }
+      this.face(idle, 0);
+    }
+
+    /* Feelers and breathing. grab (0..1) curls the feelers in, right after a catch. */
+    face(idle, grab) {
+      for (let side = 0; side < 2; side++) {
+        const mirror = side === 0 ? 1 : -1;
+        const palpSwing = Math.sin(idle * 3 + side) * 6 - grab * 14;
+        const pa = (-75 + palpSwing) * DEG;
+        const px1 = 2.4, py1 = -13.4;
+        const px2 = px1 + Math.cos(pa) * 5.5, py2 = py1 + Math.sin(pa) * 5.5;
+        this.palps[side].setAttribute("d", `M${f1(px1 * mirror)} ${py1}L${f1(px2 * mirror)} ${f1(py2)}`);
+      }
+      const breathe = 1 + Math.sin(idle * 2.2) * 0.018;
+      this.abdomen.setAttribute("ry", (14 * breathe).toFixed(2));
+    }
+  }
+
+  window.Spider = Spider;
+})();
+
+</script>
+  <script>
+/* ---- js/app.js ---- */
+/* ==========================================================================
+   Spell Spider — app
+   Loads documents, sends them to a checker, renders pages, and runs the
+   walker: the spider walks straight down the middle of every page without
+   stopping, and as it goes it plants a foot on each mistake. The moment a
+   foot lands on a mistake, the mistake is outlined and added to the list.
+   ========================================================================== */
+(function () {
+  "use strict";
+
+  const VERSION = "5";
+  const $ = (sel) => document.querySelector(sel);
+  const C = window.SpiderCheck;
+  const X = window.SpiderExtract;
+  const DEG = Math.PI / 180;
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------------- Settings ---------------- */
+  // How fast the spider walks down the page, in pixels per second.
+  const SPEEDS = [
+    { px: 18, name: "Crawl" }, { px: 30, name: "Creep" }, { px: 48, name: "Amble" },
+    { px: 72, name: "Stroll" }, { px: 105, name: "Walk" }, { px: 150, name: "Trot" },
+    { px: 220, name: "Scurry" }, { px: 330, name: "Dash" }, { px: 520, name: "Sprint" },
+    { px: 850, name: "Zoom" },
+  ];
+  const COLORS = [
+    { hex: "#2b2140", name: "Midnight" },
+    { hex: "#6b3a22", name: "Tarantula" },
+    { hex: "#2f5d3a", name: "Moss" },
+    { hex: "#8c1d3b", name: "Garnet" },
+    { hex: "#8f8aa3", name: "Ghost" },
+  ];
+  const CATS = ["spelling", "grammar", "style"];
+  const CAT_LABEL = { spelling: "Spelling", grammar: "Grammar", style: "Style" };
+
+  // Body size on screen (pixels per body unit) before the Size setting is applied.
+  const BODY_SCALE = 1.5;
+
+  // Where each foot rests compared with the body, as a fraction of the leg reach R
+  // (R is half the width of the text). x = out to the side, y = forward (-) or back (+).
+  // Right legs front to back; the left legs mirror them.
+  const HOME = [[0.66, -0.46], [0.93, -0.15], [0.91, 0.17], [0.64, 0.48]];
+  const LOOK_AHEAD = 0.5;  // reach for mistakes this far ahead of the body (fraction of R)
+
+  const STORE_KEY = "spell-spider-settings-v3";
+  const DEFAULTS = {
+    speed: 4, size: 1, color: "#2b2140",
+    follow: true, silk: true, sound: false,
+    engine: "languagetool", language: "en-US", ignore: "",
+    show: { spelling: true, grammar: true, style: true },
+  };
+
+  function loadSettings() {
+    const base = JSON.parse(JSON.stringify(DEFAULTS));
+    try {
+      const raw = localStorage.getItem(STORE_KEY) || localStorage.getItem("spell-spider-settings-v2") || localStorage.getItem("spell-spider-settings-v1");
+      if (raw) {
+        const s = JSON.parse(raw);
+        // The mistake filters are never remembered: every visit starts with spelling,
+        // grammar and style all switched on. (A saved "everything hidden" filter from an
+        // older version made the spider catch nothing.)
+        const merged = Object.assign(base, s, { show: { spelling: true, grammar: true, style: true } });
+        merged.speed = clamp(Math.round(+merged.speed || 4), 1, SPEEDS.length);
+        merged.size = clamp(+merged.size || 1, 0.6, 1.8);
+        delete merged.pause;
+        return merged;
+      }
+    } catch (e) { /* storage blocked: use defaults */ }
+    return base;
+  }
+  function saveSettings() {
+    try {
+      const keep = Object.assign({}, settings);
+      delete keep.show;
+      localStorage.setItem(STORE_KEY, JSON.stringify(keep));
+    } catch (e) { /* ignore */ }
+  }
+  const settings = loadSettings();
+
+  /* ---------------- Elements ---------------- */
+  // A stand-in for any element that is missing from the page, so a missing element can
+  // never stop the app (it just does nothing).
+  function stub() {
+    const d = document.createElement("div");
+    d.hidden = true;
+    return d;
+  }
+  const $$ = (sel) => document.querySelector(sel) || stub();
+  const els = {
+    run: $$("#btnRun"), skip: $$("#btnSkip"), all: $$("#btnAll"),
+    speed: $$("#speed"), speedOut: $$("#speedOut"), status: $$("#status"),
+    fileInput: $$("#fileInput"), docList: $$("#docList"), sample: $$("#btnSample"), emptySample: $$("#emptySample"),
+    size: $$("#size"), sizeOut: $$("#sizeOut"),
+    colors: $$("#colors"), follow: $$("#follow"), silkToggle: $$("#silkToggle"), sound: $$("#sound"),
+    language: $$("#language"), langRow: $$("#langRow"), ignore: $$("#ignore"),
+    recheck: $$("#btnRecheck"), engineNote: $$("#engineNote"),
+    viewer: $$("#viewer"), pages: $$("#pages"), empty: $$("#empty"), emptyArt: $$("#emptyArt"),
+    silk: $$("#silk"), bubble: $$("#bubble"), dropOverlay: $$("#dropOverlay"), toast: $$("#toast"),
+    caughtCount: $$("#caughtCount"), caughtList: $$("#caughtList"), caughtEmpty: $$("#caughtEmpty"),
+    caughtScroll: $$("#caughtScroll"), report: $$("#btnReport"), filterNote: $$("#filterNote"),
+    n: { spelling: $$("#nSpelling"), grammar: $$("#nGrammar"), style: $$("#nStyle") },
+    pasteToggle: $$("#btnPaste"), pasteBox: $$("#pasteBox"), pasteText: $$("#pasteText"), pasteAdd: $$("#btnPasteAdd"),
+    caughtOf: $$("#caughtOf"), version: $$("#version"),
+  };
+
+  /* ---------------- State ---------------- */
+  const docs = [];
+  const errorsById = new Map();
+  const counts = { spelling: 0, grammar: 0, style: 0 };
+  const stats = { legs: 0, sweep: 0, direct: 0 }; // how each mistake got caught (for testing)
+  let nextDocId = 1;
+  let nextErrId = 1;
+  let ignoreSet = new Set();
+  let ltWaiting = false;
+  const ltNoticesShown = new Set();
+  let ltPausedUntil = 0; // after a connection problem, skip LanguageTool for a while
+  let userScrollUntil = 0;
+
+  const spider = new window.Spider({ color: settings.color, size: BODY_SCALE * settings.size });
+  els.pages.appendChild(spider.svg);
+  spider.svg.style.display = "none";
+
+  const emptySpider = new window.Spider({ color: settings.color, size: 1.9, legPx: 5 });
+  els.emptyArt.appendChild(emptySpider.svg);
+
+  // The walker: where the spider is and what it's doing. x/y are measured from the
+  // top-left of the current page (W.page), so the spider stays put on screen when
+  // documents above it are added or removed.
+  const W = {
+    running: false, paused: false, mode: "idle",
+    page: null, x: 0, y: 24, angle: 180, targetAngle: 180,
+    speedNow: 0, moving: false, idle: 0, clock: 0, grab: 0, spin: 0,
+    cx: 0, R: 160, textTop: 0, textBottom: 0, targets: [], targetById: new Map(), measuredPage: null,
+    legs: Array.from({ length: 8 }, () => ({ x: 0, y: 0, lift: 0, swing: null, err: null, landedAt: -1 })),
+    layoutWidth: 0, pageH: 0, bubbleUntil: 0, bubbleText: "",
+  };
+
+  /* ==========================================================================
+     Documents
+     ========================================================================== */
+  function createDoc(name, kind) {
+    const doc = {
+      id: nextDocId++, name, kind, pages: [], gen: 0,
+      removed: false, failed: false, loaded: false, checking: false, groupEl: null,
+    };
+    const section = document.createElement("section");
+    section.className = "doc";
+    section.innerHTML = '<header class="doc-head"><h2 class="doc-title"></h2><p class="doc-meta"></p></header><div class="doc-pages"></div>';
+    section.querySelector(".doc-title").textContent = name;
+    doc.el = section;
+    doc.metaEl = section.querySelector(".doc-meta");
+    doc.pagesEl = section.querySelector(".doc-pages");
+    els.pages.insertBefore(section, els.silk);
+
+    const li = document.createElement("li");
+    li.className = "doc-item";
+    li.innerHTML = '<span class="doc-ext" aria-hidden="true"></span><span class="doc-info"><span class="doc-name"></span><span class="doc-state"></span></span><button class="icon-btn" type="button">×</button>';
+    li.querySelector(".doc-ext").textContent = X.label(kind);
+    li.querySelector(".doc-name").textContent = name;
+    li.querySelector(".doc-name").title = name;
+    const removeBtn = li.querySelector("button");
+    removeBtn.setAttribute("aria-label", "Remove " + name);
+    removeBtn.addEventListener("click", () => removeDoc(doc));
+    doc.listEl = li;
+    doc.stateEl = li.querySelector(".doc-state");
+    els.docList.appendChild(li);
+
+    docs.push(doc);
+    els.empty.hidden = true;
+    setDocState(doc, "Reading…");
+    return doc;
+  }
+
+  function setDocState(doc, text, bad) {
+    doc.stateEl.textContent = text;
+    doc.stateEl.classList.toggle("is-bad", !!bad);
+  }
+
+  function updateDocState(doc) {
+    if (doc.failed || !doc.loaded) return;
+    const n = doc.pages.length;
+    const ready = doc.pages.filter((p) => p.ready).length;
+    const walked = doc.pages.filter((p) => p.walked).length;
+    const caught = doc.pages.reduce((a, p) => a + p.errors.filter((e) => e.caught).length, 0);
+    const found = doc.pages.reduce((a, p) => a + p.errors.length, 0);
+    const hidden = doc.pages.reduce((a, p) => a + p.errors.filter((e) => !e.caught && !settings.show[e.category]).length, 0);
+    const word = (k) => (k === 1 ? "mistake" : "mistakes");
+    const pages = `${n} ${n === 1 ? "page" : "pages"}`;
+    if (walked === n) setDocState(doc, `Done, caught ${caught} of ${found} ${word(found)}` + (hidden ? ` (${hidden} hidden by the filters)` : ""));
+    else if (ready < n) setDocState(doc, `Checking… ${ready} of ${n} ${n === 1 ? "page" : "pages"} ready, ${found} ${word(found)} found so far`);
+    else if (walked > 0) setDocState(doc, `Walked ${walked} of ${n} pages, caught ${caught} of ${found}`);
+    else setDocState(doc, `${pages}, ${found} ${word(found)} found, ready to walk`);
+    doc.metaEl.textContent = `${n} ${n === 1 ? "page" : "pages"}`;
+  }
+
+  function buildPages(doc, pagesData) {
+    doc.pages = pagesData.map((pd, i) => {
+      const paragraphs = pd.paragraphs;
+      const starts = [];
+      let pos = 0;
+      for (const p of paragraphs) { starts.push(pos); pos += p.length + 2; }
+      const page = {
+        doc, index: i, paragraphs, starts, text: paragraphs.join("\n\n"),
+        errors: [], pending: [], piecesLeft: 0,
+        ready: false, walked: false, autoCatch: false,
+      };
+      const art = document.createElement("article");
+      art.className = "page is-checking";
+      art.setAttribute("aria-label", `${doc.name}, page ${i + 1}`);
+      art.innerHTML = '<div class="page-body"></div><footer class="page-foot"></footer>';
+      page.el = art;
+      page.bodyEl = art.querySelector(".page-body");
+      art.querySelector(".page-foot").textContent = `Page ${i + 1} of ${pagesData.length}`;
+      doc.pagesEl.appendChild(art);
+      renderPage(page);
+      return page;
+    });
+    doc.loaded = true;
+    updateDocState(doc);
+  }
+
+  /* Draw a page's text, wrapping each found mistake in an (invisible) <mark>. */
+  function renderPage(page) {
+    const body = page.bodyEl;
+    body.textContent = "";
+    if (!page.paragraphs.length) {
+      const p = document.createElement("p");
+      p.className = "no-text";
+      p.textContent = "No text found on this page. It may be a scanned image, which the spider can't read.";
+      body.appendChild(p);
+      return;
+    }
+    const errs = page.errors.slice().sort((a, b) => a.offset - b.offset);
+    let ei = 0;
+    page.paragraphs.forEach((para, i) => {
+      const p = document.createElement("p");
+      p.className = "para";
+      const start = page.starts[i];
+      const end = start + para.length;
+      let pos = 0;
+      while (ei < errs.length && errs[ei].offset < end) {
+        const e = errs[ei++];
+        const s = e.offset - start;
+        if (s < pos) continue;
+        const len = Math.min(e.length, para.length - s);
+        if (s > pos) p.appendChild(document.createTextNode(para.slice(pos, s)));
+        const m = document.createElement("mark");
+        m.className = "err cat-" + e.category;
+        m.dataset.id = e.id;
+        m.textContent = para.slice(s, s + len);
+        if (e.caught) { m.classList.add("caught"); m.title = tooltipFor(e); }
+        e.el = m;
+        p.appendChild(m);
+        pos = s + len;
+      }
+      if (pos < para.length) p.appendChild(document.createTextNode(para.slice(pos)));
+      body.appendChild(p);
+    });
+  }
+
+  async function addFiles(files) {
+    const jobs = [];
+    for (const file of files) {
+      const kind = X.kindOf(file);
+      if (!kind) {
+        notice(`“${file.name}” can't be read. Use .txt, .md, .pdf, .docx, .rtf or .html files.`);
+        continue;
+      }
+      jobs.push({ file, doc: createDoc(file.name, kind) });
+    }
+    refreshUI();
+    for (const { file, doc } of jobs) {
+      try {
+        const res = await X.readFile(file, (p, n) => setDocState(doc, `Reading page ${p} of ${n}…`));
+        if (doc.removed) continue;
+        buildPages(doc, res.pages);
+        if (!res.pages.some((p) => p.paragraphs.length)) {
+          notice(`No text found in “${doc.name}”. Scanned PDFs are images, and the spider can only read text.`);
+        }
+        queueCheck(doc);
+      } catch (err) {
+        if (doc.removed) continue;
+        console.error(err);
+        doc.failed = true;
+        setDocState(doc, "Couldn't read this file", true);
+        const box = document.createElement("p");
+        box.className = "doc-failed";
+        box.textContent = `This file couldn't be opened${err && err.message ? ": " + err.message : "."} If it's a PDF, check that it isn't password-protected.`;
+        doc.pagesEl.appendChild(box);
+      }
+      placeIdleSpider();
+      refreshUI();
+    }
+  }
+
+  function removeDoc(doc) {
+    if (doc.removed) return;
+    if (W.page && W.page.doc === doc) {
+      setFrame(null);
+      if (W.running && !["spin", "done", "idle"].includes(W.mode)) W.mode = "next-page";
+    }
+    doc.removed = true;
+    for (const page of doc.pages) {
+      for (const err of page.errors) {
+        if (err.caught) counts[err.category]--;
+        errorsById.delete(err.id);
+      }
+    }
+    // Any foot on its way to one of this document's mistakes just takes a normal step.
+    for (const leg of W.legs) {
+      if (leg.swing && leg.swing.err && leg.swing.err.doc === doc) leg.swing.err = null;
+      if (leg.err && leg.err.doc === doc) leg.err = null;
+    }
+    if (doc.groupEl) doc.groupEl.remove();
+    doc.el.remove();
+    doc.listEl.remove();
+    docs.splice(docs.indexOf(doc), 1);
+    const qi = checkQueue.indexOf(doc);
+    if (qi >= 0) checkQueue.splice(qi, 1);
+    if (!docs.length) {
+      W.running = false; W.paused = false; W.mode = "idle"; W.page = null;
+      els.empty.hidden = false;
+    }
+    placeIdleSpider();
+    renderCounts();
+    refreshUI();
+  }
+
+  /* ==========================================================================
+     Checking
+     ========================================================================== */
+  const checkQueue = [];
+  let checkBusy = false;
+
+  function queueCheck(doc) {
+    if (!checkQueue.includes(doc)) checkQueue.push(doc);
+    pumpChecks();
+  }
+
+  async function pumpChecks() {
+    if (checkBusy) return;
+    checkBusy = true;
+    try {
+      while (checkQueue.length) {
+        const doc = checkQueue.shift();
+        if (!doc.removed && doc.loaded) {
+          try { await checkDoc(doc); } catch (err) { console.error(err); finishDocAnyway(doc); }
+        }
+      }
+    } finally {
+      checkBusy = false;
+    }
+  }
+
+  /* If checking crashes, still show the pages so the spider doesn't wait forever. */
+  function finishDocAnyway(doc) {
+    doc.checking = false;
+    for (const page of doc.pages) if (!page.ready) { page.piecesLeft = 0; finalizePage(page); }
+    updateDocState(doc);
+    refreshUI();
+  }
+
+  function splitPage(page, max, sizeOf) {
+    if (sizeOf(page.text) <= max) return [{ page, start: 0, text: page.text }];
+    const pieces = [];
+    let cur = null;
+    page.paragraphs.forEach((para, i) => {
+      const start = page.starts[i];
+      if (cur && sizeOf(cur.text) + 2 + sizeOf(para) > max) { pieces.push(cur); cur = null; }
+      if (!cur) cur = { page, start, text: para };
+      else cur.text = page.text.slice(cur.start, start + para.length);
+    });
+    if (cur) pieces.push(cur);
+    return pieces;
+  }
+
+  function englishResult(matches) {
+    const lang = (matches && matches.language) || settings.language || "";
+    return /^en/i.test(lang) || (settings.language === "auto" && !matches.language);
+  }
+
+  const LT_NOTICES = {
+    offline: "Couldn't reach LanguageTool, so the built-in checker is doing all the work. It still finds spelling and common grammar mistakes.",
+    busy: "LanguageTool is busy right now, so the built-in checker is doing the work for a bit.",
+    refused: "LanguageTool skipped a part with lots of mistakes, so the built-in checker caught those instead.",
+  };
+
+  /* Check one block of text. The built-in checker always runs (it's bundled, works offline
+     and never gives up). In Online mode LanguageTool runs at the same time and its results
+     are combined with the built-in ones. If LanguageTool is slow, the page doesn't wait for
+     it: the built-in results are used right away and LanguageTool's extra finds are added
+     to the page when they arrive. */
+  const LT_WAIT_MS = 8000;
+  async function checkText(text, online) {
+    const askLT = online && Date.now() >= ltPausedUntil;
+    const ltCall = askLT
+      ? C.LanguageTool.check(text, { language: settings.language }).catch((err) => err)
+      : null;
+    let local = [];
+    try { local = await C.Builtin.check(text); } catch (err) { console.error(err); }
+    if (!ltCall) return { matches: local, late: null };
+    const LATE = {};
+    const first = await Promise.race([ltCall, sleep(LT_WAIT_MS).then(() => LATE)]);
+    if (first === LATE) return { matches: local, late: ltCall.then((lt) => combine(lt, local)) };
+    return { matches: combine(first, local) || local, late: null };
+  }
+
+  /* LanguageTool's results plus anything extra the built-in checker found (null if LanguageTool failed). */
+  function combine(lt, local) {
+    if (lt instanceof Error) {
+      if (lt.kind === "offline") ltPausedUntil = Date.now() + 120000;
+      if (lt.kind === "busy") ltPausedUntil = Date.now() + 30000;
+      const kind = lt.kind || "offline";
+      if (!ltNoticesShown.has(kind)) { ltNoticesShown.add(kind); notice(LT_NOTICES[kind] || LT_NOTICES.offline); }
+      return null;
+    }
+    // Text in another language: the built-in checker only knows English, so don't let it guess.
+    if (!englishResult(lt)) return lt;
+    return C.mergeExtra(lt, local);
+  }
+
+  /* LanguageTool answered after the page was already shown: add whatever it found that
+     isn't marked yet. If the spider already walked past, those get caught right away. */
+  function addLateMatches(batch, matches) {
+    const touched = new Set();
+    for (const part of batch.parts) {
+      const pc = part.piece;
+      const page = pc.page;
+      if (page.doc.removed || !page.ready) continue;
+      const end = part.at + pc.text.length;
+      const added = [];
+      for (const m of matches) {
+        if (!(m.offset >= part.at && m.offset + m.length <= end)) continue;
+        const offset = m.offset - part.at + pc.start;
+        if (page.errors.some((e) => offset < e.offset + e.length && offset + m.length > e.offset)) continue;
+        const err = makeError(page, Object.assign({}, m, { offset }));
+        if (err) added.push(err);
+      }
+      if (!added.length) continue;
+      page.errors = page.errors.concat(added).sort((a, b) => a.offset - b.offset);
+      renderPage(page);
+      if (W.measuredPage === page) measurePage(page);
+      if (page.walked) for (const err of added) if (catchable(err)) { catchError(err, true, true); stats.sweep++; }
+      touched.add(page.doc);
+    }
+    for (const doc of touched) updateDocState(doc);
+    renderCounts();
+    refreshUI();
+  }
+
+  async function checkDoc(doc) {
+    const gen = doc.gen;
+    const online = settings.engine === "languagetool";
+    const encoder = new TextEncoder();
+    const sizeOf = online ? (t) => encoder.encode(t).length : (t) => t.length;
+    const max = online ? C.LanguageTool.maxRequestBytes : 5000;
+    doc.checking = true;
+
+    if (!C.Builtin.typo && !C.Builtin.dictionaryFailed) {
+      setDocState(doc, "Loading the dictionary…");
+      await C.Builtin.load();
+      if (C.Builtin.dictionaryFailed) {
+        notice("The spelling dictionary couldn't load, so only the grammar rules are running.");
+      }
+    }
+    if (doc.removed || doc.gen !== gen) return;
+
+    const pieces = [];
+    for (const page of doc.pages) {
+      page.pending = [];
+      if (!page.text.trim()) { page.piecesLeft = 0; finalizePage(page); continue; }
+      const ps = splitPage(page, max, sizeOf);
+      page.piecesLeft = ps.length;
+      pieces.push(...ps);
+    }
+
+    // Group pieces into requests. The first one is small so the spider can start sooner.
+    const batches = [];
+    let cur = null;
+    let limit = online ? Math.min(max, 3000) : max;
+    for (const pc of pieces) {
+      if (cur && sizeOf(cur.text) + 2 + sizeOf(pc.text) > limit) { batches.push(cur); cur = null; limit = max; }
+      if (!cur) cur = { text: "", parts: [] };
+      if (cur.text) cur.text += "\n\n";
+      cur.parts.push({ piece: pc, at: cur.text.length });
+      cur.text += pc.text;
+    }
+    if (cur) batches.push(cur);
+
+    updateDocState(doc);
+    for (const batch of batches) {
+      if (doc.removed || doc.gen !== gen) return;
+      const { matches, late } = await checkText(batch.text, online);
+      if (doc.removed || doc.gen !== gen) return;
+      if (late) {
+        late.then((more) => {
+          if (more && !doc.removed && doc.gen === gen) addLateMatches(batch, more);
+        }).catch((err) => console.error(err));
+      }
+      for (const part of batch.parts) {
+        const pc = part.piece;
+        const end = part.at + pc.text.length;
+        for (const m of matches) {
+          if (m.offset >= part.at && m.offset + m.length <= end) {
+            pc.page.pending.push(Object.assign({}, m, { offset: m.offset - part.at + pc.start }));
+          }
+        }
+        pc.page.piecesLeft--;
+        if (pc.page.piecesLeft === 0) finalizePage(pc.page);
+      }
+      updateDocState(doc);
+      await sleep(0);
+    }
+    doc.checking = false;
+    updateDocState(doc);
+    refreshUI();
+  }
+
+  function finalizePage(page) {
+    const errs = [];
+    for (const m of C.dedupe(page.pending)) {
+      const err = makeError(page, m);
+      if (err) errs.push(err);
+    }
+    page.pending = [];
+    page.errors = errs;
+    renderPage(page);
+    page.ready = true;
+    page.el.classList.remove("is-checking");
+    if (page.autoCatch) sweepPage(page, false);
+    if (W.measuredPage === page) measurePage(page);
+    updateDocState(page.doc);
+    refreshUI();
+  }
+
+  function makeError(page, m) {
+    const i = paragraphIndexAt(page, m.offset);
+    if (i < 0) return null;
+    const paraEnd = page.starts[i] + page.paragraphs[i].length;
+    const length = Math.min(m.length, paraEnd - m.offset);
+    if (length <= 0) return null;
+    const err = {
+      id: nextErrId++, page, doc: page.doc,
+      offset: m.offset, length,
+      text: page.text.substr(m.offset, length),
+      message: m.message || "Possible mistake.", replacements: (m.replacements || []).filter(Boolean),
+      category: CATS.includes(m.category) ? m.category : "grammar",
+      ruleId: m.ruleId || "", caught: false, el: null, item: null, leg: null,
+    };
+    errorsById.set(err.id, err);
+    return err;
+  }
+
+  function paragraphIndexAt(page, offset) {
+    for (let i = 0; i < page.paragraphs.length; i++) {
+      const s = page.starts[i];
+      if (offset >= s && offset < s + page.paragraphs[i].length) return i;
+    }
+    return -1;
+  }
+
+  function recheckAll() {
+    resetCatches();
+    for (const doc of docs) {
+      if (!doc.loaded) continue;
+      doc.gen++;
+      for (const page of doc.pages) {
+        for (const e of page.errors) errorsById.delete(e.id);
+        page.errors = [];
+        page.pending = [];
+        page.ready = false;
+        page.walked = false;
+        page.autoCatch = false;
+        page.el.classList.add("is-checking");
+        renderPage(page);
+      }
+      queueCheck(doc);
+    }
+    W.targets = [];
+    W.targetById.clear();
+    if (W.running) W.mode = "next-page";
+    else { W.mode = "idle"; placeIdleSpider(true); }
+    els.engineNote.hidden = true;
+    refreshUI();
+  }
+
+  /* ==========================================================================
+     Catching
+     ========================================================================== */
+  function isIgnored(err) {
+    if (err.category !== "spelling" || !ignoreSet.size) return false;
+    return ignoreSet.has(err.text.trim().toLowerCase().replace(/’/g, "'"));
+  }
+  function catchable(err) {
+    return settings.show[err.category] && !isIgnored(err);
+  }
+  function alive(err) {
+    return errorsById.get(err.id) === err && !err.doc.removed;
+  }
+
+  function tooltipFor(err) {
+    let t = err.message;
+    if (err.replacements.length) t += "\nSuggestion: " + err.replacements.slice(0, 3).join(", ");
+    return t;
+  }
+
+  function catchError(err, animate, quiet) {
+    if (err.caught) return;
+    err.caught = true;
+    if (err.el) {
+      err.el.classList.add("caught");
+      if (animate && !reducedMotion) err.el.classList.add("lasso");
+      err.el.title = tooltipFor(err);
+    }
+    counts[err.category]++;
+    addToList(err, animate);
+    renderCounts();
+    if (animate && !quiet) playCatchSound(err.category);
+  }
+
+  function uncatch(err) {
+    if (!err.caught) return;
+    err.caught = false;
+    counts[err.category]--;
+    if (err.el) {
+      err.el.classList.remove("caught", "lasso", "flash");
+      err.el.removeAttribute("title");
+    }
+    if (err.item) {
+      const group = err.item.closest(".ci-group");
+      err.item.remove();
+      err.item = null;
+      if (group && !group.querySelector(".ci")) { group.remove(); err.doc.groupEl = null; }
+    }
+    renderCounts();
+  }
+
+  function resetCatches() {
+    for (const err of errorsById.values()) {
+      err.caught = false;
+      err.item = null;
+      err.leg = null;
+      if (err.el) { err.el.classList.remove("caught", "lasso", "flash"); err.el.removeAttribute("title"); }
+    }
+    for (const leg of W.legs) {
+      if (leg.swing) leg.swing.err = null;
+      leg.err = null;
+    }
+    for (const doc of docs) {
+      doc.groupEl = null;
+      for (const page of doc.pages) page.walked = false;
+      updateDocState(doc);
+    }
+    els.caughtList.textContent = "";
+    for (const c of CATS) counts[c] = 0;
+    stats.legs = stats.sweep = stats.direct = 0;
+    renderCounts();
+  }
+
+  /* Catch everything left on a page that the spider is allowed to catch. */
+  function sweepPage(page, animate) {
+    for (const err of page.errors) {
+      if (!err.caught && catchable(err)) { catchError(err, animate, true); stats.sweep++; }
+    }
+    page.walked = true;
+    updateDocState(page.doc);
+  }
+
+  /* After the ignore list or the kinds filter changes, bring catches in line. */
+  function syncCatches() {
+    for (const err of errorsById.values()) {
+      if (err.caught && isIgnored(err)) uncatch(err);
+      else if (!err.caught && err.page.walked && catchable(err)) catchError(err, false, true);
+    }
+    for (const doc of docs) updateDocState(doc);
+    refreshUI();
+  }
+
+  function renderCounts() {
+    let total = 0;
+    for (const c of CATS) {
+      els.n[c].textContent = counts[c];
+      if (settings.show[c]) total += counts[c];
+    }
+    els.caughtCount.textContent = total;
+    let found = 0;
+    for (const err of errorsById.values()) if (settings.show[err.category] && !isIgnored(err)) found++;
+    els.caughtOf.textContent = found > total ? `of ${found} found` : "";
+    els.caughtEmpty.hidden = els.caughtList.children.length > 0;
+    els.report.disabled = total === 0;
+    renderFilterNote();
+  }
+
+  /* Say plainly when a filter is hiding mistakes the checker found. */
+  function renderFilterNote() {
+    const off = CATS.filter((c) => !settings.show[c]);
+    let hidden = 0;
+    if (off.length) {
+      for (const err of errorsById.values()) if (!settings.show[err.category]) hidden++;
+    }
+    if (!off.length) { els.filterNote.hidden = true; return; }
+    const names = off.map((c) => CAT_LABEL[c].toLowerCase());
+    const list = names.length > 1 ? names.slice(0, -1).join(", ") + " and " + names[names.length - 1] : names[0];
+    els.filterNote.textContent = hidden
+      ? `${hidden} ${hidden === 1 ? "mistake is" : "mistakes are"} hidden because ${list} ${off.length > 1 ? "are" : "is"} switched off. Select ${off.length > 1 ? "them" : "it"} above to show ${hidden === 1 ? "it" : "them"}.`
+      : `${list[0].toUpperCase() + list.slice(1)} ${off.length > 1 ? "are" : "is"} switched off, so the spider skips ${off.length > 1 ? "those mistakes" : "that kind of mistake"}.`;
+    els.filterNote.hidden = false;
+  }
+
+  function visibleText(err) {
+    const t = err.text;
+    if (!t.trim()) return "extra space";
+    return /\s/.test(t) && err.category === "style" ? t.replace(/ /g, "␣") : t;
+  }
+
+  function addToList(err, animate) {
+    const doc = err.doc;
+    if (!doc.groupEl || !doc.groupEl.isConnected) {
+      const g = document.createElement("li");
+      g.className = "ci-group";
+      g.dataset.doc = doc.id;
+      g.innerHTML = '<h3 class="ci-doc"></h3><ol class="ci-items"></ol>';
+      g.querySelector(".ci-doc").textContent = doc.name;
+      const order = docs.indexOf(doc);
+      const after = Array.from(els.caughtList.children).find((el) => {
+        const d = docs.find((x) => String(x.id) === el.dataset.doc);
+        return d && docs.indexOf(d) > order;
+      });
+      els.caughtList.insertBefore(g, after || null);
+      doc.groupEl = g;
+    }
+    const li = document.createElement("li");
+    li.className = "ci cat-" + err.category;
+    li.dataset.id = err.id;
+    const key = err.page.index * 1e7 + err.offset;
+    li.dataset.key = key;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "ci-btn";
+    btn.innerHTML = '<span class="ci-top"><span class="ci-word"></span><span class="ci-where"></span></span><span class="ci-msg"></span>';
+    btn.querySelector(".ci-word").textContent = visibleText(err);
+    btn.querySelector(".ci-where").textContent = `${CAT_LABEL[err.category]}, page ${err.page.index + 1}`;
+    btn.querySelector(".ci-msg").textContent = err.message;
+    if (err.replacements.length) {
+      const fix = document.createElement("span");
+      fix.className = "ci-fix";
+      const r = err.replacements.slice(0, 3).map((s) => (s.trim() ? `“${s}”` : "removing it"));
+      fix.textContent = "Try " + (r.length > 1 ? r.slice(0, -1).join(", ") + " or " + r[r.length - 1] : r[0]);
+      btn.appendChild(fix);
+    }
+    btn.addEventListener("click", () => focusError(err));
+    li.appendChild(btn);
+
+    const items = doc.groupEl.querySelector(".ci-items");
+    const before = Array.from(items.children).find((el) => +el.dataset.key > key);
+    items.insertBefore(li, before || null);
+    err.item = li;
+
+    if (animate) {
+      li.classList.add("is-new");
+      setTimeout(() => li.classList.remove("is-new"), 700);
+      pendingReveal = li; // scrolled into view on the next frame
+    }
+  }
+
+  let pendingReveal = null;
+
+  /* Scroll the mistakes list (only the list, never the whole page) so an item is visible. */
+  function revealInList(li, center) {
+    const sc = els.caughtScroll;
+    const lr = li.getBoundingClientRect();
+    const sr = sc.getBoundingClientRect();
+    let delta = 0;
+    if (center) delta = lr.top - sr.top - sr.height / 3;
+    else if (lr.bottom > sr.bottom) delta = lr.bottom - sr.bottom + 16;
+    else if (lr.top < sr.top + 40) delta = lr.top - sr.top - 40;
+    if (delta) sc.scrollTo({ top: sc.scrollTop + delta, behavior: center && !reducedMotion ? "smooth" : "auto" });
+  }
+
+  function focusError(err) {
+    if (!err.el) return;
+    const v = els.viewer;
+    const r = err.el.getBoundingClientRect();
+    const vr = v.getBoundingClientRect();
+    const top = v.scrollTop + (r.top - vr.top) - v.clientHeight * 0.4;
+    v.scrollTo({ top, behavior: reducedMotion ? "auto" : "smooth" });
+    userScrollUntil = performance.now() + 6000;
+    err.el.classList.remove("lasso", "flash");
+    void err.el.offsetWidth;
+    if (!reducedMotion) err.el.classList.add("flash");
+    setActiveItem(err);
+  }
+
+  function setActiveItem(err) {
+    els.caughtList.querySelectorAll(".ci.is-active").forEach((el) => el.classList.remove("is-active"));
+    if (err.item) err.item.classList.add("is-active");
+  }
+
+  /* ==========================================================================
+     The walker
+     The body walks straight down the middle of the text. Each of the eight feet
+     stays planted where it landed until the body has moved on, then steps
+     forward again (alternating groups of four, like a real spider). When a
+     mistake comes within reach, the best-placed free leg steps right onto it,
+     and the mistake is caught the instant that foot lands. The body never
+     slows down for a catch.
+     ========================================================================== */
+  function frameOffset(page) {
+    if (page && page.el && page.el.isConnected) return { x: page.el.offsetLeft, y: page.el.offsetTop };
+    return { x: 0, y: 0 };
+  }
+
+  /* Switch the spider's coordinates to another page without moving it on screen. */
+  function setFrame(page) {
+    const a = frameOffset(W.page);
+    const b = frameOffset(page);
+    const dx = a.x - b.x, dy = a.y - b.y;
+    W.x += dx; W.y += dy;
+    for (const leg of W.legs) {
+      leg.x += dx; leg.y += dy;
+      const s = leg.swing;
+      if (s) {
+        s.sx += dx; s.sy += dy;
+        s.target = { x: s.target.x + dx, y: s.target.y + dy };
+      }
+    }
+    W.page = page;
+  }
+
+  function rot(deg, x, y) {
+    const a = deg * DEG, c = Math.cos(a), s = Math.sin(a);
+    return [x * c - y * s, x * s + y * c];
+  }
+  function forward() {
+    const a = W.angle * DEG;
+    return { x: Math.sin(a), y: -Math.cos(a) };
+  }
+  // Leg k's resting foot position relative to the body, in pixels, before rotation.
+  function homeLocal(k) {
+    const h = HOME[k & 3];
+    return [(k < 4 ? 1 : -1) * h[0] * W.R, h[1] * W.R];
+  }
+  // Leg k's resting foot position in page coordinates.
+  function homeAt(k, tuck) {
+    const [lx, ly] = homeLocal(k);
+    const t = tuck || 1;
+    const [ox, oy] = rot(W.angle, lx * t, ly * t);
+    return { x: W.x + ox, y: W.y + oy };
+  }
+  function gaitGroup(k) { return ((k & 3) + (k >> 2)) % 2; }
+
+  function snapFeet() {
+    for (let k = 0; k < 8; k++) {
+      const h = homeAt(k);
+      const leg = W.legs[k];
+      if (leg.swing && leg.swing.err && leg.swing.err.leg === k) leg.swing.err.leg = null;
+      leg.x = h.x; leg.y = h.y; leg.swing = null; leg.lift = 0; leg.err = null;
+    }
+  }
+
+  /* Measure the page: its middle, how far the legs must reach, where the text
+     starts and ends, and where every mistake sits. */
+  function measurePage(page) {
+    if (!page || !page.el.isConnected) return;
+    const body = page.bodyEl;
+    W.cx = body.offsetLeft + body.offsetWidth / 2;
+    W.R = Math.max(60, body.clientWidth / 2 + 4);
+    const blocks = body.children;
+    if (blocks.length) {
+      const first = blocks[0], last = blocks[blocks.length - 1];
+      W.textTop = first.offsetTop;
+      W.textBottom = last.offsetTop + last.offsetHeight;
+    } else {
+      W.textTop = body.offsetTop;
+      W.textBottom = body.offsetTop + body.offsetHeight;
+    }
+    if (W.measuredPage !== page) { W.targetById = new Map(); W.measuredPage = page; }
+    const base = page.el.getBoundingClientRect();
+    const list = [];
+    for (const err of page.errors) {
+      if (!err.el) continue;
+      const rects = Array.from(err.el.getClientRects()).filter((r) => r.width > 0 || r.height > 0);
+      if (!rects.length) continue;
+      const r = rects[0];
+      let t = W.targetById.get(err.id);
+      if (!t || t.err !== err) { t = { err, x: 0, y: 0 }; W.targetById.set(err.id, t); }
+      t.x = r.left + r.width / 2 - base.left;
+      t.y = r.top + r.height / 2 - base.top;
+      list.push(t);
+    }
+    list.sort((a, b) => a.y - b.y || a.x - b.x);
+    W.targets = list;
+    W.layoutWidth = els.pages.clientWidth;
+    W.pageH = page.el.offsetHeight;
+  }
+
+  function firstPage() {
+    for (const doc of docs) if (doc.loaded && doc.pages.length) return doc.pages[0];
+    return null;
+  }
+
+  /* When nothing is happening, park the spider at the top of the first page. */
+  function placeIdleSpider(force) {
+    if (W.running || W.mode === "spin") return; // never yank a spider that's busy
+    const page = firstPage();
+    if (!page) { W.page = null; return; }
+    if (force || !W.page || !W.page.el.isConnected || W.mode === "idle") {
+      W.page = page;
+      measurePage(page);
+      W.x = W.cx; W.y = 24; W.angle = W.targetAngle = 180; W.speedNow = 0;
+      W.mode = "idle";
+      snapFeet();
+    }
+  }
+
+  function hasUnwalked() {
+    return docs.some((d) => !d.removed && !d.failed && (!d.loaded || d.pages.some((p) => !p.walked)));
+  }
+  function anyLoaded() { return docs.some((d) => d.loaded && d.pages.length); }
+
+  function findNextPage() {
+    for (const doc of docs) {
+      if (doc.removed || doc.failed) continue;
+      if (!doc.loaded) return { loading: true };
+      for (const page of doc.pages) if (!page.walked) return { page };
+    }
+    return {};
+  }
+
+  function startPage(page) {
+    setFrame(page);
+    measurePage(page);
+    // If the spider is already below the start of this page's text (a document above it
+    // was removed, or everything was re-checked), hop back to the top of the page first,
+    // so no part of the page is skipped.
+    if (W.y > W.textTop) {
+      W.x = W.cx; W.y = 24; W.speedNow = 0; W.angle = W.targetAngle = 180;
+      snapFeet();
+    }
+    W.backlog = 0;
+    W.mode = "walk";
+    refreshUI();
+  }
+
+  function endPage() {
+    const page = W.page;
+    if (page && !page.doc.removed) sweepPage(page, true); // safety net: nothing is ever left behind
+    W.mode = "next-page";
+    refreshUI();
+  }
+
+  function finishWalk() {
+    W.running = false;
+    W.paused = false;
+    W.mode = "spin";
+    W.spin = 1.1;
+    W.speedNow = 0;
+    for (const leg of W.legs) leg.swing = null;
+    showBubble("All done!", 3500);
+    refreshUI();
+  }
+
+  function relayout() {
+    if (!W.page || !W.page.el.isConnected) return;
+    if (els.pages.clientWidth === W.layoutWidth && W.page.el.offsetHeight === W.pageH) return;
+    measurePage(W.page);
+    if (!W.running && W.mode === "idle") { W.x = W.cx; snapFeet(); }
+  }
+
+  /* ---- Moving the body ---- */
+  function walkBody(dt, v) {
+    // Full walking speed over the text; hurry through empty space between pages.
+    const zoneTop = W.textTop - W.R * 0.7;
+    const zoneBottom = W.textBottom + W.R * 0.2;
+    // Ease off (never below a third of the speed, never a stop) while lots of mistakes are in reach.
+    const busy = clamp(1 - ((W.backlog || 0) - 10) / 30, 0.35, 1);
+    let want = v * busy;
+    if (W.y < zoneTop) want = Math.max(v, Math.min(1400, 160 + (zoneTop - W.y) * 2.5));
+    else if (W.y > zoneBottom) want = Math.max(v, 240);
+    W.speedNow += (want - W.speedNow) * Math.min(1, dt * 6);
+    W.y += W.speedNow * dt;
+    W.x += (W.cx - W.x) * Math.min(1, dt * 4);
+    W.targetAngle = 180;
+    W.moving = W.speedNow > 0.5;
+  }
+
+  function moveToward(tx, ty, speed, dt) {
+    const dx = tx - W.x, dy = ty - W.y;
+    const d = Math.hypot(dx, dy);
+    if (d < 0.5) { W.moving = false; W.speedNow = 0; return true; }
+    const moved = Math.min(d, speed * dt);
+    W.x += (dx / d) * moved;
+    W.y += (dy / d) * moved;
+    W.speedNow = moved / Math.max(dt, 1e-6);
+    W.moving = true;
+    W.targetAngle = 180;
+    return moved >= d - 0.5;
+  }
+
+  /* ---- Legs ---- */
+  function catchStepTime(v) { return clamp(18 / Math.max(v, W.speedNow, 1), 0.07, 0.24); }
+  function walkStepTime(v) { return clamp(30 / Math.max(v, W.speedNow, 1), 0.12, 0.42); }
+
+  function startSwing(k, target, err, dur) {
+    const leg = W.legs[k];
+    if (leg.swing && leg.swing.err && leg.swing.err !== err && leg.swing.err.leg === k) leg.swing.err.leg = null;
+    leg.swing = { sx: leg.x, sy: leg.y, target, err: err || null, t: 0, dur };
+    if (err) err.leg = k;
+  }
+
+  function land(k) {
+    const leg = W.legs[k];
+    const s = leg.swing;
+    leg.swing = null;
+    leg.lift = 0;
+    leg.x = s.target.x;
+    leg.y = s.target.y;
+    leg.err = null;
+    const err = s.err;
+    if (!err) return;
+    if (err.leg === k) err.leg = null;
+    if (!alive(err)) return;
+    leg.err = err;
+    leg.landedAt = W.clock;
+    if (!err.caught && catchable(err)) {
+      catchError(err, true);
+      stats.legs++;
+      footBurst(leg.x, leg.y, err.category);
+      W.grab = 1;
+    }
+  }
+
+  /* Pick the free leg whose resting spot is closest to the mistake, preferring
+     legs on the same side of the body. */
+  function pickLeg(t) {
+    let best = -1, bestScore = Infinity;
+    const side = t.x - W.x;
+    for (let k = 0; k < 8; k++) {
+      const leg = W.legs[k];
+      if (leg.swing && leg.swing.err) continue; // already heading for a mistake
+      const h = homeAt(k);
+      const sameSide = Math.abs(side) < W.R * 0.08 || Math.sign(h.x - W.x) === Math.sign(side);
+      let score = Math.hypot(h.x - t.x, h.y - t.y) + (sameSide ? 0 : W.R * 0.9);
+      if (leg.err && W.clock - leg.landedAt < 0.12) score += W.R * 0.3; // it just landed; let it stand a beat
+      if (score < bestScore) { bestScore = score; best = k; }
+    }
+    return best;
+  }
+
+  /* Send legs to every mistake that has come within reach. */
+  function reachForMistakes(v) {
+    const f = forward();
+    const ahead0 = W.R * LOOK_AHEAD;
+    // How many mistakes are in reach and not caught yet. When there are lots of them,
+    // the legs move faster and the body eases off a little (it never stops) so that
+    // every single mistake still gets stepped on by a leg.
+    let backlog = 0;
+    for (const t of W.targets) {
+      const err = t.err;
+      if (err.caught || !catchable(err) || !alive(err)) continue;
+      const ahead = (t.x - W.x) * f.x + (t.y - W.y) * f.y;
+      if (ahead > ahead0) break;
+      backlog++;
+    }
+    W.backlog = backlog;
+    const quick = backlog > 6;
+    for (const t of W.targets) {
+      const err = t.err;
+      if (err.caught || err.leg != null || !catchable(err) || !alive(err)) continue;
+      const ahead = (t.x - W.x) * f.x + (t.y - W.y) * f.y;
+      if (ahead > ahead0) break; // targets are sorted top to bottom
+      const late = ahead < -W.R * 0.45;  // the body already went past it: grab it right now
+      const lost = ahead < -W.R * 1.1;   // far behind and every leg was busy (only at extreme speeds)
+      const k = pickLeg(t);
+      if (k < 0) {
+        if (lost) { catchError(err, true); stats.direct++; }
+        continue;
+      }
+      startSwing(k, t, err, late || quick ? 0.035 : catchStepTime(v));
+    }
+  }
+
+  function pendingCatchesOn(page) {
+    return W.legs.some((l) => l.swing && l.swing.err && l.swing.err.page === page);
+  }
+
+  function updateLegs(dt, v, gait) {
+    // Move feet that are mid-step.
+    for (let k = 0; k < 8; k++) {
+      const leg = W.legs[k];
+      const s = leg.swing;
+      if (!s) continue;
+      s.t = Math.min(1, s.t + dt / s.dur);
+      const e = s.t < 0.5 ? 2 * s.t * s.t : 1 - Math.pow(-2 * s.t + 2, 2) / 2;
+      leg.x = s.sx + (s.target.x - s.sx) * e;
+      leg.y = s.sy + (s.target.y - s.sy) * e;
+      leg.lift = Math.sin(Math.PI * s.t);
+      if (s.t >= 1) land(k);
+    }
+    if (!gait) return;
+
+    // Ordinary walking: a planted foot that has fallen behind steps forward again.
+    const T = W.R * 0.24;
+    const f = forward();
+    const busy = [false, false];
+    for (let k = 0; k < 8; k++) {
+      const s = W.legs[k].swing;
+      if (s && !s.err) busy[gaitGroup(k)] = true;
+    }
+    for (let k = 0; k < 8; k++) {
+      const leg = W.legs[k];
+      if (leg.swing) continue;
+      const h = homeAt(k);
+      const lag = (h.x - leg.x) * f.x + (h.y - leg.y) * f.y;
+      const dist = Math.hypot(h.x - leg.x, h.y - leg.y);
+      if (leg.err) {
+        // A foot standing on a mistake stays there until the body has walked past it.
+        if (lag <= T * 0.8 && dist <= W.R * 1.4) continue;
+        if (W.clock - leg.landedAt < 0.18) continue;
+      } else if (lag <= T && dist <= W.R * 0.5) {
+        continue;
+      }
+      const g = gaitGroup(k);
+      if (busy[1 - g] && lag < T * 1.8 && dist < W.R * 0.85) continue;
+      const lead = W.moving ? T * 0.45 : 0;
+      startSwing(k, { x: h.x + f.x * lead, y: h.y + f.y * lead }, null, walkStepTime(v));
+      busy[g] = true;
+    }
+  }
+
+  function step(dt) {
+    const v = SPEEDS[settings.speed - 1].px;
+    switch (W.mode) {
+      case "idle":
+      case "done":
+        W.mode = "next-page";
+        break;
+
+      case "next-page": {
+        const nx = findNextPage();
+        if (nx.page) {
+          if (nx.page.ready) startPage(nx.page);
+          else { setFrame(nx.page); measurePage(nx.page); W.mode = "wait"; refreshUI(); }
+        } else if (nx.loading) {
+          W.mode = "wait-doc";
+          refreshUI();
+        } else {
+          finishWalk();
+        }
+        break;
+      }
+
+      case "wait": {
+        const page = W.page;
+        if (!page || page.doc.removed || page.walked) { W.mode = "next-page"; break; }
+        if (page.ready) { startPage(page); break; }
+        // Walk to the top of the page that's still being checked and wait there.
+        moveToward(W.cx, W.y < 24 ? 24 : W.y, Math.max(v, 160), dt);
+        break;
+      }
+
+      case "wait-doc": {
+        W.moving = false;
+        W.speedNow = 0;
+        const nx = findNextPage();
+        if (nx.page || !nx.loading) W.mode = "next-page";
+        break;
+      }
+
+      case "walk": {
+        walkBody(dt, v);
+        reachForMistakes(v);
+        if (W.y >= W.textBottom + W.R * 0.1 && !pendingCatchesOn(W.page)) endPage();
+        break;
+      }
+    }
+    if (W.mode !== "spin") updateLegs(dt, v, true);
+  }
+
+  /* ---------------- Drawing ---------------- */
+  function showBubble(text, ms) {
+    W.bubbleText = text;
+    W.bubbleUntil = ms ? performance.now() + ms : Infinity;
+  }
+
+  function footBurst(x, y, cat) {
+    if (reducedMotion) return;
+    const off = frameOffset(W.page);
+    const b = document.createElement("span");
+    b.className = "foot-burst cat-" + cat;
+    b.style.left = off.x + x + "px";
+    b.style.top = off.y + y + "px";
+    els.pages.appendChild(b);
+    setTimeout(() => b.remove(), 700);
+  }
+
+  function drawSpider() {
+    const sc = spider.size;
+    const feet = [], rest = [], lift = [];
+    for (let k = 0; k < 8; k++) {
+      const leg = W.legs[k];
+      feet.push(rot(-W.angle, (leg.x - W.x) / sc, (leg.y - W.y) / sc));
+      const [hx, hy] = homeLocal(k);
+      const hp = window.Spider.hip(k);
+      rest.push(Math.max(8, Math.hypot(hx / sc - hp[0], hy / sc - hp[1])));
+      lift.push(leg.lift || 0);
+    }
+    spider.reach(feet, rest, lift);
+    spider.face(W.idle, W.grab);
+  }
+
+  function render(dt, now) {
+    const visible = !!(W.page && W.page.el.isConnected);
+    spider.svg.style.display = visible ? "" : "none";
+    if (!visible) {
+      els.silk.style.display = "none";
+      els.bubble.hidden = true;
+      return;
+    }
+    const off = frameOffset(W.page);
+    const ax = W.x + off.x, ay = W.y + off.y;
+    spider.place(ax, ay, W.angle);
+    drawSpider();
+
+    // Silk thread from the top of the page down to the spider's back end
+    const walking = W.running && ["walk", "wait"].includes(W.mode);
+    const [tx, ty] = rot(W.angle, 0, 25 * spider.size);
+    const bx = ax + tx, by = ay + ty;
+    const sx = off.x + W.cx, sy = off.y;
+    if (settings.silk && walking && by - sy > 4) {
+      const len = Math.hypot(bx - sx, by - sy);
+      els.silk.style.display = "block";
+      els.silk.style.width = len + "px";
+      els.silk.style.transform = `translate(${sx}px, ${sy}px) rotate(${Math.atan2(by - sy, bx - sx)}rad)`;
+    } else {
+      els.silk.style.display = "none";
+    }
+
+    // Speech bubble
+    let text = "";
+    if (W.running && (W.mode === "wait" || W.mode === "wait-doc")) text = "Reading ahead…";
+    else if (now < W.bubbleUntil) text = W.bubbleText;
+    if (text) {
+      if (els.bubble.textContent !== text) els.bubble.textContent = text;
+      els.bubble.hidden = false;
+      els.bubble.style.transform = `translate(${ax}px, ${ay - 30 * spider.size}px) translate(-50%, -100%)`;
+    } else {
+      els.bubble.hidden = true;
+    }
+
+    // Keep the spider in view, with room to see what's coming
+    if (settings.follow && W.running && !W.paused && now > userScrollUntil) {
+      const v = els.viewer;
+      const desired = els.pages.offsetTop + ay - v.clientHeight * 0.36;
+      const target = Math.max(0, Math.min(desired, v.scrollHeight - v.clientHeight));
+      const diff = target - v.scrollTop;
+      if (Math.abs(diff) > 0.5) v.scrollTop += reducedMotion ? diff : diff * Math.min(1, dt * 3.2);
+    }
+  }
+
+  let lastFrame = performance.now();
+  let crashes = 0;
+  function frame(now) {
+    try {
+      tick(now);
+    } catch (err) {
+      recover(err);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  /* If anything ever goes wrong while walking, the mistakes still get caught:
+     the current page is finished off and the walk carries on (or stops safely). */
+  function recover(err) {
+    console.error(err);
+    crashes++;
+    try {
+      for (const leg of W.legs) { leg.swing = null; leg.err = null; }
+      for (const e of errorsById.values()) e.leg = null;
+      if (W.page && W.page.ready && !W.page.doc.removed) sweepPage(W.page, false);
+      if (crashes > 3) {
+        for (const doc of docs) for (const page of doc.pages) if (page.ready) sweepPage(page, false);
+        W.running = false; W.paused = false; W.mode = "idle";
+      } else if (W.running) {
+        W.mode = "next-page";
+      }
+      refreshUI();
+    } catch (e2) { console.error(e2); }
+  }
+
+  /* Watchdog: a walking spider that hasn't moved for 4 seconds finishes the page. */
+  let watchY = 0, watchSince = 0;
+  function watchdog(now) {
+    if (!(W.running && !W.paused && W.mode === "walk")) { watchSince = now; watchY = W.y; return; }
+    if (Math.abs(W.y - watchY) > 1) { watchY = W.y; watchSince = now; return; }
+    if (now - watchSince > 4000) {
+      watchSince = now;
+      endPage();
+    }
+  }
+
+  function tick(now) {
+    const dt = Math.min(0.05, Math.max(0, (now - lastFrame) / 1000));
+    lastFrame = now;
+    W.idle += dt;
+    const v = SPEEDS[settings.speed - 1].px;
+
+    if (W.mode === "spin") {
+      // A happy twirl at the end, legs pulled in a little.
+      W.moving = false;
+      W.spin -= dt;
+      W.angle += (360 * dt) / 1.1;
+      W.targetAngle = W.angle;
+      for (let k = 0; k < 8; k++) {
+        const h = homeAt(k, 0.6);
+        const leg = W.legs[k];
+        leg.x += (h.x - leg.x) * Math.min(1, dt * 14);
+        leg.y += (h.y - leg.y) * Math.min(1, dt * 14);
+        leg.lift = 0.4;
+      }
+      if (W.spin <= 0) {
+        W.mode = "done";
+        W.angle = W.targetAngle = 180;
+        for (let k = 0; k < 8; k++) startSwing(k, homeAt(k), null, 0.35);
+        refreshUI();
+      }
+    } else if (W.running && !W.paused) {
+      W.clock += dt;
+      step(dt);
+    } else if (!W.paused) {
+      W.clock += dt;
+      W.moving = false;
+      updateLegs(dt, v, false);
+    } else {
+      W.moving = false;
+    }
+
+    W.grab += (0 - W.grab) * Math.min(1, dt * 8);
+    if (W.mode !== "spin") {
+      const d = ((((W.targetAngle - W.angle) % 360) + 540) % 360) - 180;
+      W.angle += d * Math.min(1, dt * 9);
+    }
+    render(dt, now);
+    watchdog(now);
+    if (pendingReveal) { const li = pendingReveal; pendingReveal = null; if (li.isConnected) revealInList(li, false); }
+
+    if (!els.empty.hidden) {
+      const sway = Math.sin(W.idle * 0.9) * 7;
+      emptySpider.place(100 + sway * 0.6, 150 + Math.sin(W.idle * 1.3) * 4, 180 + sway);
+      emptySpider.hangPose(W.idle * 0.4, W.idle, 0.12);
+      const thread = els.emptyArt.firstElementChild;
+      if (thread) {
+        thread.style.height = 150 + Math.sin(W.idle * 1.3) * 4 - 40 + "px";
+        thread.style.transform = `translateX(${sway * 0.3}px) rotate(${-sway * 0.18}deg)`;
+      }
+    }
+  }
+
+  /* ==========================================================================
+     UI wiring
+     ========================================================================== */
+  function refreshUI() {
+    const loaded = anyLoaded();
+    const unwalked = hasUnwalked();
+    const walkingPage = W.running && W.page && W.mode === "walk";
+
+    let label;
+    if (W.running) label = W.paused ? "Resume" : "Pause";
+    else if (!unwalked && loaded) label = "Walk again";
+    else if (docs.some((d) => d.pages.some((p) => p.walked))) label = "Keep walking";
+    else label = "Start walking";
+    els.run.textContent = label;
+    els.run.disabled = !loaded;
+    els.skip.disabled = !walkingPage;
+    els.all.disabled = !unwalked || !loaded;
+    els.recheck.disabled = !docs.some((d) => d.loaded);
+    updateStatus();
+  }
+
+  function updateStatus() {
+    const total = CATS.reduce((a, c) => a + (settings.show[c] ? counts[c] : 0), 0);
+    const word = total === 1 ? "mistake" : "mistakes";
+    let msg;
+    if (!docs.length) msg = "Add documents to begin.";
+    else if (W.running && W.paused) msg = "Paused. Press Resume to keep walking.";
+    else if (W.running && W.mode === "wait" && W.page) {
+      msg = ltWaiting
+        ? "Waiting for LanguageTool's free limit to reset. This can take up to a minute."
+        : `Waiting for page ${W.page.index + 1} of “${W.page.doc.name}” to finish checking…`;
+    } else if (W.running && W.mode === "wait-doc") msg = "Waiting for the next document to open…";
+    else if (W.running && W.page) msg = `Walking page ${W.page.index + 1} of ${W.page.doc.pages.length} in “${W.page.doc.name}”.`;
+    else if (!hasUnwalked() && anyLoaded()) {
+      const n = docs.filter((d) => d.loaded).length;
+      msg = `Finished. Caught ${total} ${word} in ${n} ${n === 1 ? "document" : "documents"}.`;
+    } else if (docs.some((d) => d.checking || !d.loaded)) msg = "Checking your documents. You can start walking now.";
+    else msg = "Ready. Press Start walking.";
+    if (els.status.textContent !== msg) els.status.textContent = msg;
+  }
+
+  let toastTimer = null;
+  function notice(msg) {
+    els.toast.textContent = msg;
+    els.toast.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { els.toast.hidden = true; }, 7000);
+  }
+
+  /* ---------------- Sound ---------------- */
+  let audio = null;
+  function ensureAudio() {
+    if (!settings.sound) return;
+    try {
+      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+      if (audio.state === "suspended") audio.resume();
+    } catch (e) { audio = null; }
+  }
+  let lastSound = 0;
+  function playCatchSound(cat) {
+    if (!settings.sound) return;
+    const nowMs = performance.now();
+    if (nowMs - lastSound < 70) return; // lots of catches at once: one blip is enough
+    lastSound = nowMs;
+    try { blip(cat); } catch (e) { /* sound is optional */ }
+  }
+  function blip(cat) {
+    ensureAudio();
+    if (!audio) return;
+    const t = audio.currentTime;
+    const o = audio.createOscillator();
+    const g = audio.createGain();
+    const f = cat === "spelling" ? 660 : cat === "grammar" ? 520 : 420;
+    o.type = "triangle";
+    o.frequency.setValueAtTime(f, t);
+    o.frequency.exponentialRampToValueAtTime(f * 1.6, t + 0.08);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.09, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.17);
+    o.connect(g).connect(audio.destination);
+    o.start(t);
+    o.stop(t + 0.2);
+  }
+
+  /* ---------------- Report ---------------- */
+  function contextOf(err) {
+    const t = err.page.text;
+    const a = Math.max(0, err.offset - 40), b = Math.min(t.length, err.offset + err.length + 40);
+    return (a > 0 ? "…" : "") + t.slice(a, b).replace(/\s+/g, " ") + (b < t.length ? "…" : "");
+  }
+  function csvCell(v) {
+    let s = String(v == null ? "" : v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; // stop spreadsheets treating text as a formula
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  }
+  function downloadReport() {
+    const rows = [["Document", "Page", "Type", "Mistake", "Message", "Suggestions", "Context"]];
+    for (const doc of docs) {
+      for (const page of doc.pages) {
+        for (const err of page.errors) {
+          if (!err.caught || !settings.show[err.category]) continue;
+          rows.push([doc.name, page.index + 1, CAT_LABEL[err.category], err.text, err.message,
+            err.replacements.join(" | "), contextOf(err)]);
+        }
+      }
+    }
+    const csv = rows.map((r) => r.map(csvCell).join(",")).join("\r\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "spell-spider-report.csv";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+  }
+
+  /* ---------------- Sample ---------------- */
+  const SAMPLE = `The Library at the Edge of Town
+
+Last saturday, me and my freind decided to explore the old libary at the edge of town. Their is a rumor that the building is haunted, but we didnt believe it. When we arrived , the door was already open and a owl was sitting on the stairs.
+
+Inside, it was more darker then we expected. My freind said we should of brought a flashlight. i agreed, but we kept walking anyway. The the floor creaked under every step, and dust floated in the air like tiny ghosts.
+
+We found a book that had fell off a shelf. Its a diary from 1923, and the handwritting was beautiful.The last page said: "Whoever reads this, please take care of the library." We was so suprised that we almost dropped it.
+
+Now we visit every week and help sort the shelfs. Its not haunted at all. It was just lonely, and it needed somebody to notice it.`;
+
+  let pasteCount = 0;
+  function addPastedText() {
+    const text = els.pasteText.value || "";
+    if (!text.trim()) { notice("Paste or type some text first."); return; }
+    pasteCount++;
+    const name = pasteCount === 1 ? "pasted-text.txt" : `pasted-text-${pasteCount}.txt`;
+    let file;
+    try { file = new File([text], name, { type: "text/plain" }); }
+    catch (e) { file = new Blob([text], { type: "text/plain" }); file.name = name; }
+    els.pasteText.value = "";
+    els.pasteBox.hidden = true;
+    els.pasteToggle.setAttribute("aria-expanded", "false");
+    addFiles([file]);
+  }
+
+  function loadSample() {
+    let file;
+    try { file = new File([SAMPLE], "sample-story.txt", { type: "text/plain" }); }
+    catch (e) { file = new Blob([SAMPLE], { type: "text/plain" }); file.name = "sample-story.txt"; }
+    addFiles([file]);
+  }
+
+  /* ---------------- Controls ---------------- */
+  function applySettingsToUI() {
+    els.speed.value = settings.speed;
+    els.speedOut.textContent = SPEEDS[settings.speed - 1].name;
+    els.size.value = settings.size;
+    els.sizeOut.textContent = Math.round(settings.size * 100) + "%";
+    els.follow.checked = settings.follow;
+    els.silkToggle.checked = settings.silk;
+    els.sound.checked = settings.sound;
+    els.language.value = settings.language;
+    els.ignore.value = settings.ignore;
+    document.querySelectorAll('input[name="engine"]').forEach((r) => { r.checked = r.value === settings.engine; });
+    els.langRow.hidden = settings.engine !== "languagetool";
+    applyKindVisibility();
+  }
+
+  function buildSwatches() {
+    const frag = document.createDocumentFragment();
+    let matched = false;
+    for (const c of COLORS) {
+      const label = document.createElement("label");
+      label.className = "swatch";
+      label.title = c.name;
+      const input = document.createElement("input");
+      input.type = "radio";
+      input.name = "color";
+      input.value = c.hex;
+      input.setAttribute("aria-label", c.name);
+      if (c.hex.toLowerCase() === settings.color.toLowerCase()) { input.checked = true; matched = true; }
+      const dot = document.createElement("span");
+      dot.style.setProperty("--sw", c.hex);
+      label.append(input, dot);
+      frag.appendChild(label);
+    }
+    const custom = document.createElement("label");
+    custom.className = "swatch swatch-custom";
+    custom.title = "Pick any color";
+    const radio = document.createElement("input");
+    radio.type = "radio";
+    radio.name = "color";
+    radio.value = "custom";
+    radio.setAttribute("aria-label", "Custom color");
+    radio.checked = !matched;
+    const dot = document.createElement("span");
+    const picker = document.createElement("input");
+    picker.type = "color";
+    picker.value = settings.color;
+    picker.setAttribute("aria-label", "Choose a custom color");
+    picker.tabIndex = -1;
+    custom.append(radio, dot, picker);
+    frag.appendChild(custom);
+    els.colors.appendChild(frag);
+
+    els.colors.addEventListener("change", (e) => {
+      if (e.target.name === "color" && e.target.value !== "custom") setColor(e.target.value);
+      if (e.target.name === "color" && e.target.value === "custom") picker.click();
+    });
+    picker.addEventListener("input", () => { radio.checked = true; setColor(picker.value); });
+  }
+
+  function setColor(hex) {
+    settings.color = hex;
+    spider.setColor(hex);
+    emptySpider.setColor(hex);
+    saveSettings();
+  }
+
+  function applyKindVisibility() {
+    for (const c of CATS) {
+      els.pages.classList.toggle("hide-" + c, !settings.show[c]);
+      els.caughtList.classList.toggle("hide-" + c, !settings.show[c]);
+      const chip = document.querySelector(`.chip[data-cat="${c}"]`);
+      if (chip) {
+        chip.setAttribute("aria-pressed", String(settings.show[c]));
+        chip.title = settings.show[c] ? `Hide ${c} mistakes` : `Show ${c} mistakes`;
+      }
+    }
+  }
+
+  function parseIgnore(text) {
+    return new Set(text.split(/[\n,;]+/).map((s) => s.trim().toLowerCase().replace(/’/g, "'")).filter(Boolean));
+  }
+
+  function wire() {
+    els.run.addEventListener("click", () => {
+      ensureAudio();
+      if (W.running) {
+        W.paused = !W.paused;
+      } else {
+        if (!hasUnwalked()) { resetCatches(); W.mode = "idle"; placeIdleSpider(true); }
+        W.running = true;
+        W.paused = false;
+        if (!["wait", "wait-doc", "walk"].includes(W.mode)) W.mode = "next-page";
+        userScrollUntil = 0;
+      }
+      refreshUI();
+    });
+
+    els.skip.addEventListener("click", () => {
+      if (W.running && W.page && W.mode === "walk") endPage();
+    });
+
+    els.all.addEventListener("click", () => {
+      for (const doc of docs) {
+        for (const page of doc.pages) {
+          if (page.walked) continue;
+          if (page.ready) sweepPage(page, false);
+          else page.autoCatch = true;
+        }
+      }
+      W.running = false;
+      W.paused = false;
+      W.mode = "idle";
+      refreshUI();
+    });
+
+    els.speed.addEventListener("input", () => {
+      settings.speed = +els.speed.value;
+      els.speedOut.textContent = SPEEDS[settings.speed - 1].name;
+      saveSettings();
+    });
+    els.size.addEventListener("input", () => {
+      settings.size = +els.size.value;
+      els.sizeOut.textContent = Math.round(settings.size * 100) + "%";
+      spider.setSize(BODY_SCALE * settings.size);
+      saveSettings();
+    });
+    els.follow.addEventListener("change", () => { settings.follow = els.follow.checked; saveSettings(); });
+    els.silkToggle.addEventListener("change", () => { settings.silk = els.silkToggle.checked; saveSettings(); });
+    els.sound.addEventListener("change", () => {
+      settings.sound = els.sound.checked;
+      saveSettings();
+      if (settings.sound) { ensureAudio(); playCatchSound("spelling"); }
+    });
+
+    document.querySelectorAll('input[name="engine"]').forEach((r) => {
+      r.addEventListener("change", () => {
+        if (!r.checked) return;
+        settings.engine = r.value;
+        saveSettings();
+        els.langRow.hidden = settings.engine !== "languagetool";
+        els.engineNote.hidden = !docs.some((d) => d.loaded);
+        if (settings.engine === "builtin") C.Builtin.load();
+      });
+    });
+    els.language.addEventListener("change", () => {
+      settings.language = els.language.value;
+      saveSettings();
+      els.engineNote.hidden = !docs.some((d) => d.loaded) || settings.engine !== "languagetool";
+    });
+
+    let ignoreTimer = null;
+    els.ignore.addEventListener("input", () => {
+      clearTimeout(ignoreTimer);
+      ignoreTimer = setTimeout(() => {
+        settings.ignore = els.ignore.value;
+        ignoreSet = parseIgnore(settings.ignore);
+        saveSettings();
+        syncCatches();
+      }, 350);
+    });
+
+    els.recheck.addEventListener("click", recheckAll);
+
+    document.querySelectorAll(".chip").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        const c = chip.dataset.cat;
+        if (settings.show[c] && CATS.filter((k) => settings.show[k]).length === 1) {
+          notice("Keep at least one kind of mistake switched on, or the spider has nothing to catch.");
+          return;
+        }
+        settings.show[c] = !settings.show[c];
+        saveSettings();
+        applyKindVisibility();
+        syncCatches();
+        for (const doc of docs) updateDocState(doc);
+        renderCounts();
+      });
+    });
+
+    els.report.addEventListener("click", downloadReport);
+
+    // Picking files. Copy the list first, then clear the input so the same file can be picked again.
+    els.fileInput.addEventListener("change", () => {
+      const files = Array.from(els.fileInput.files || []);
+      els.fileInput.value = "";
+      if (files.length) addFiles(files);
+    });
+    els.sample.addEventListener("click", loadSample);
+    els.pasteToggle.addEventListener("click", () => {
+      els.pasteBox.hidden = !els.pasteBox.hidden;
+      els.pasteToggle.setAttribute("aria-expanded", String(!els.pasteBox.hidden));
+      if (!els.pasteBox.hidden) els.pasteText.focus();
+    });
+    els.pasteAdd.addEventListener("click", addPastedText);
+    $$("#emptyPaste").addEventListener("click", () => {
+      els.pasteBox.hidden = false;
+      els.pasteToggle.setAttribute("aria-expanded", "true");
+      els.pasteBox.scrollIntoView({ block: "nearest" });
+      els.pasteText.focus({ preventScroll: true });
+    });
+    els.pasteText.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); addPastedText(); }
+    });
+    els.emptySample.addEventListener("click", loadSample);
+
+    // Clicking an outlined mistake highlights it in the list
+    els.pages.addEventListener("click", (e) => {
+      const m = e.target.closest("mark.err.caught");
+      if (!m) return;
+      const err = errorsById.get(+m.dataset.id);
+      if (!err || !err.item) return;
+      setActiveItem(err);
+      revealInList(err.item, true);
+    });
+
+    // If you scroll the documents yourself, the camera stops following for a few seconds
+    const userScrolled = () => { userScrollUntil = performance.now() + 4000; };
+    els.viewer.addEventListener("wheel", userScrolled, { passive: true });
+    els.viewer.addEventListener("touchmove", userScrolled, { passive: true });
+    els.viewer.addEventListener("keydown", (e) => {
+      if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(e.key)) userScrolled();
+    });
+
+    // Drag and drop anywhere on the page
+    let dragDepth = 0;
+    const hasFiles = (e) => e.dataTransfer && Array.from(e.dataTransfer.types || []).includes("Files");
+    window.addEventListener("dragenter", (e) => {
+      if (!hasFiles(e)) return;
+      e.preventDefault();
+      dragDepth++;
+      els.dropOverlay.hidden = false;
+    });
+    window.addEventListener("dragleave", (e) => {
+      if (!hasFiles(e)) return;
+      dragDepth = Math.max(0, dragDepth - 1);
+      if (!dragDepth) els.dropOverlay.hidden = true;
+    });
+    window.addEventListener("dragover", (e) => {
+      if (!hasFiles(e)) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "copy";
+    });
+    window.addEventListener("drop", (e) => {
+      if (!hasFiles(e)) return;
+      e.preventDefault();
+      dragDepth = 0;
+      els.dropOverlay.hidden = true;
+      const files = Array.from(e.dataTransfer.files || []);
+      if (files.length) addFiles(files);
+    });
+
+    // Re-measure when the layout width changes or web fonts finish loading
+    let relayoutTimer = null;
+    const scheduleRelayout = () => {
+      clearTimeout(relayoutTimer);
+      relayoutTimer = setTimeout(relayout, 120);
+    };
+    if (window.ResizeObserver) new ResizeObserver(scheduleRelayout).observe(els.pages);
+    else window.addEventListener("resize", scheduleRelayout);
+    if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener("loadingdone", scheduleRelayout);
+
+    C.LanguageTool.onWait = (waiting) => { ltWaiting = waiting; updateStatus(); };
+  }
+
+  /* ---------------- Start ---------------- */
+  els.version.textContent = "v" + VERSION;
+  ignoreSet = parseIgnore(settings.ignore);
+  buildSwatches();
+  applySettingsToUI();
+  wire();
+  renderCounts();
+  refreshUI();
+  requestAnimationFrame(frame);
+  // Get the private dictionary ready in the background, so it's there instantly if it's needed.
+  setTimeout(() => { C.Builtin.load(); }, 1500);
+
+  // A tiny hook for testing from the browser console
+  window.SpellSpider = { version: VERSION, addFiles, state: W, docs, settings, stats };
+})();
+
+</script>
+</body>
+</html>
